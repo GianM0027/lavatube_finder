@@ -1,3 +1,5 @@
 papers
 .venv
 .idea
+.env
+data
