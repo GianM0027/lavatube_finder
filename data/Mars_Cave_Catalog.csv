@@ -1,0 +1,1063 @@
+label,longitude,latitude,TypeCode,Priority,APC_Diameter,APC_Depth,Comment
+APC001,240.4585,-0.94678,APC,1,25,32,APC -- tiny ~25m
+APC003,237.696,-12.47266,APC,1,30,47,APC 40m small deep nochain--big smrp?
+APC005,240.8867,-5.68445,APC,1,30,17,APC deep pair
+APC006,240.9421,-1.61377,APC,1,40,38,APC small deep?
+APC007,241.2993,-1.68555,APC,1,40,28,"APC, deep? ~40m"
+APC008,241.7492,-6.64679,APC,1,40,50,APC deep
+APC009,244.2588,-1.28809,APC,1,40,45,APC ~ small deep
+APC010,241.3897,-2.71338,APC,1,45,30,"APC, deep ~45m"
+APC011,243.2452,-4.50244,APC,1,45,34,APC irregular 119x45
+APC012,244.2749,-1.08203,APC,1,45,48,"APC ~ small deep, faint graben?"
+APC013,244.2788,-1.12158,APC,1,45,50,"APC ~ small deep, faint graben?"
+APC014,236.3418,-13.89099,APC,1,50,75,APC nochain deep
+APC015,243.7466,-6.17554,APC,1,75,66,"APC - deep, ~ 75x55m"
+APC016,243.0341,-4.20642,APC,0,55,35,APC - deep - 60m >.65 d/D
+APC017,243.372,-5.88489,APC,1,55,33,APC deep
+APC018,236.7605,-13.86035,APC,1,60,85,APC irregular nochain deep
+APC020,240.5234,-1.05363,APC,1,70,53,CTX images not very clear.
+APC021,241.0972,-1.57715,APC,1,60,44,"APC, deep"
+APC022,242.085,-2.86392,APC,1,65,31,Small APC probably Type II
+APC023,242.63,-5.29,APC,1,60,46,APC
+APC024,245.7545,11.83345,APC,1,60,27,50m half-filled APC?
+APC025,250.1067,4.13696,APC,1,60,88,APC -- Deep d/D > 1.4
+APC026,257.1238,12.6433,APC,1,60,48,Ascraeus NE flank 60m APC in chain with largers
+APC027,235.1852,0.87524,APC,1,65,96,APC deep nochain
+APC028,236.3438,-21.41626,APC,1,65,49,"APC,  AA"
+APC029,240.723,-18.73004,APC,1,65,80,APC deep nochain
+APC030,240.895,-5.68079,APC,1,65,38,APC deep pair
+APC032,242.246,-2.71902,APC,1,70,38,Small APC - dark interior with sharp edge.
+APC033,240.4639,-0.95215,APC,1,70,89,"APC -- deep, ~70m"
+APC034,236.42,-13.6,APC,1,75,50,APC -- end chain deep
+APC035,237.9064,-18.10693,APC,1,75,76,"APC, irregular heart shape in AA? ~ questionable, just a dark floor?"
+APC038,241.5786,-1.85474,APC,1,80,44,APC ~ squarish pit
+APC039,255.6328,7.1543,APC,1,80,71,APC
+APC040,238.8126,-19.40198,APC,1,90,82,"Hourglass -- merged APCs? 185 long,22 m narrowest"
+APC041,239.3748,-1.02046,APC,1,90,57,"APC, 85m, 52deep"
+APC042,239.54,-1.31,APC,1,90,100,"deep, nochain, 109m"
+APC043,239.66,-1.36,APC,1,90,47,APC
+APC045,237.8282,-2.04173,APC,0,95,67,Probably Type I
+APC046,236.7245,-14.87268,APC,1,100,32,APC  nochain bearded -- no night thermal? 100m
+APC047,237.5336,-14.5343,APC,1,125,52,APC in chain
+APC048,245.75,-15.85,APC,1,110,102,APC
+APC049,241.2538,-13.53717,APC,1,105,80,APC irregular 105x176
+APC050,237.0449,-0.31885,APC,1,110,83,APC deep super pair
+APC051,238.8672,-13.6178,APC,1,110,50,APC nochain b=102
+APC052,239.64,-1.67,APC,1,110,55,APC
+APC053,239.9044,-11.35315,APC,1,110,66,APC near chains
+APC054,249.2178,0.33252,APC,1,109,67,"APC in graben, 120m irregular"
+APC055,252.7008,21.79194,APC,1,112,78,2 Channel edge mystery spots
+APC056,237.0503,-0.33545,APC,1,115,86,APC deep super pair
+APC057,238.309,-14.36212,APC,1,115,39,APC 144m  dark material inside? possible vent
+APC058,249.7645,1.43201,APC,1,115,82,APC ~120m?
+APC059,232.8127,2.04565,APC,1,118,71,APC - Type II
+APC060,237.0083,-11.72388,APC,1,120,68,APC
+APC061,240.9015,-7.17221,APC,0,119,55,APC nochain
+APC062,236.51,-17.21,APC,1,130,85,APC nochain AA 150m
+APC063,236.51,-13.96,APC,1,125,39,APC nochain
+APC064,237.4902,-14.00342,APC,1,125,44,APC  in chain
+APC065,239.95,-13.92,APC,1,125,59,APC nochain
+APC066,238.7723,-14.06042,APC,1,130,45,APC
+APC067,239.7908,-14.84766,APC,1,130,47,"APC inchain, 120m"
+APC068,240.54,-6.713,APC,1,130,93,"APC Irregular, 128x95"
+APC069,235.4121,-14.20947,APC,1,159,47,nochain
+APC070,239.4691,-0.91003,APC,1,95,67,Type I or II? No chain. Sloped upper rim above aperture.
+APC071,240.02,-13.84,APC,1,140,81,APC nochain
+APC072,240.32,-7.84,APC,1,170,72,APC
+APC073,245.89,-16.33,APC,0,150,50,APC
+APC074,239.22,-13.94,APC,0,180,46,APC
+APC075,241.3931,-5.5332,APC,0,165,345,APC ~ Jeanne
+APC076,235.4053,0.99561,APC,1,165,114,"APC, end of pit, inchain 162m"
+APC077,237.252,-13.07,APC,1,165,71,APC
+APC078,237.558,-14.507,APC,1,185,88,APC
+APC079,240.04,-14.28,APC,0,175,84,APC in chain b=164
+APC080,236.62,-12.6,APC,1,180,63,"APC, nochain, on inflated tubeflow"
+APC081,238.1161,-18.901,APC,1,185,112,APC dark nochain
+APC082,239.02,-6.31,APC,1,185,99,APC
+APC083,239.53,-13.38,APC,1,190,82,APC
+APC084,248.5801,-0.45215,APC,1,190,87,APC -- 7th grd class
+APC085,247.5515,17.28099,APC,0,200,59,Fanpit B
+APC086,240.55,-6.708,APC,1,215,161,APC -- dust mound under rim
+APC087,237.3879,-19.57495,APC,1,230,80,APC Elliot
+APC088,236.6821,-17.10645,APC,1,235,75,APC 324m shallow?
+APC089,238.41,-18.55,APC,1,240,80,"APC, AA, nochain"
+APC090,237.05,-10.59,APC,1,250,69,APC
+APC091,240.03,-6.52,APC,1,250,155,APC
+APC092,247.5439,17.27168,APC,1,275,167,Fanpit A
+APC093,239.21,-4.29,APC,1,285,132,APC
+APC094,259.3536,24.76974,APC,0,350,128,Tractus3
+APC095,259.3452,26.16333,APC,0,375,183,Tractus1
+APC096,237.56,-19.46,APC,1,475,124,"Hayden, 540m nochain"
+APC098,245.85,-16.25,APC,0,150,50,APC
+APC099,242.5299,-17.46004,APC,0,215,151,APC
+APC100,234.9626,-8.11974,APC,1,130,80,"135 x 90, depth may be wrong if interior is dark material."
+APC101,239.4024,-13.67523,APC,1,430,138,"Very large type III - Upper cliffs, sloped lower walls."
+APC102,239.4213,-13.68152,APC,1,375,103,"Very large type III - Upper cliffs, sloped lower walls."
+APC103,239.4382,-13.68353,APC,1,520,218,"Very large type III - Upper cliffs, sloped lower walls."
+APC104,238.6571,-6.36218,APC,0,130,57,APC
+APC105,236.539,-13.08098,APC,1,190,47,APC
+APC106,139.1303,28.58124,APC,1,255,92,sloped floor?
+APC107,139.7143,28.58714,APC,1,160,34,in chain - Elysium
+APC108,139.9279,28.53275,APC,1,360,105,in chain - Elysium 3+
+APC109,139.3289,29.70285,APC,1,240,74,220x260ish
+APC110,139.6895,29.71901,APC,1,115,43,near trough rim -- Elysium
+APC111,142.1093,29.26669,APC,1,160,55,near Elysium ~160m
+APC112,147.5129,24.76074,APC,1,100,72,Good Elysium Type II APC
+APC113,147.9082,22.53269,APC,1,270,98,Elysium APC
+APC114,148.7321,24.41968,APC,1,90,20,~90m - maybe TypeII
+APC115,149.9153,23.21488,APC,1,135,74,Classic APC ~145m
+APC117,236.07,-13.94,APC,1,200,84,"APC, Circe"
+APC118,238.131,-12.91895,APC,1,90,30,APC -- Small type II?
+APC119,236.5708,-6.75638,APC,1,250,101,"APC irregular 250x450 trough, In spread-out chain,"
+APC120,237.5425,-14.52867,APC,1,175,88,"APC in chain with Catalina, 105 deep,171 across"
+APC121,259.3264,25.23291,APC,0,425,185,Tractus2
+APC122,235.1589,-14.00238,APC,1,122,41,nochain
+APC123,236.8814,-11.86816,APC,1,210,57,chain
+APC124,234.8862,-14.66162,APC,1,250,72,APC
+APC125,239.3912,-14.9541,APC,1,137,36,APC
+APC126,239.391,-14.95801,APC,1,125,38,APC
+APC127,235.4273,-13.75894,APC,1,105,50,APC
+APC128,255.8157,16.17691,APC,1,60,41,APC ~ 60m
+APC129,231.8792,-2.09052,APC,0,230,105,Outstandingly perfect Type II APC
+APC130,122.0461,21.52222,APC,1,110,41,collapse pit kinda like an APC
+APC131,239.25,-13.52,APC,0,170,31,APC
+APC132,242.42,-4.28,APC,0,130,20,APC - Shallow or filled-in? Possible rim overhang
+APC133,250.3825,30.53043,APC,1,140,70,APC Lathrop contrib
+APC134,234.7664,-2.49139,APC,1,100,47,APC
+APC135,234.7219,-2.3743,APC,1,110,53,APC 110x80
+APC136,234.7186,-2.36801,APC,1,90,58,APC 90x75
+APC137,234.7136,-2.35385,APC,1,75,40,APC
+APC138,235.9404,-18.64916,APC,1,135,65,"APC, dark, 135x90"
+APC139,250.4644,30.71753,APC,1,415,168,Large ovoid APC 415x310 d=168  Lathrop contrib
+APC140,252.2473,-4.35956,APC,0,135x195,91,Notcis Labyrinth APC - deep; overhang
+APC141,225.4586,-24.78119,APC,0,110,35,SW Daedalia APC
+CC0001,240.9941,-5.37891,con,1,n/a,n/a,connected tube?
+CC0002,240.9938,-5.38513,con,1,n/a,n/a,connected tube?
+CC0003,253.8723,0.19116,crk,3,n/a,n/a,Fractures in channel wall
+CC0004,252.8344,6.12328,crk,3,n/a,n/a,pit or fracture near deep trough
+CC0005,258.4243,14.23633,crk,3,n/a,n/a,Channel wall fracture candidate
+CC0006,254.5296,8.3631,crk,3,n/a,n/a,Channel
+CC0007,254.033,4.3313,crk,3,n/a,n/a,fracture in channel wall
+CC0008,231.4201,2.48972,crk,3,n/a,n/a,Irregular pattern of graben fractures
+CC0009,235.4658,-3.85303,crk,2,n/a,n/a,Small rimless pit
+CC0010,241.0615,-7.18286,end,2,n/a,n/a,Deep pit in end of trough
+CC0011,122.3054,21.50098,pit,0,n/a,n/a,large deep Hephaestus pit
+CC0012,144.0397,23.37192,end,2,n/a,n/a,Discreet pit at end of trough
+CC0013,141.0048,29.4056,end,2,n/a,n/a,distal end of pit chain
+CC0014,139.7594,29.83328,end,2,n/a,n/a,end of trough
+CC0015,236.6222,-6.66313,end,1,n/a,n/a,upper end of trough - impact?
+CC0016,239.6518,-20.14194,end,2,n/a,n/a,Possible entrance at trough end where fault continues
+CC0017,239.6345,-20.22433,end,3,n/a,n/a,possible accesss beneath partially collapseed pit
+CC0018,258.5737,10.57269,end,3,n/a,n/a,pit at end of shallow chain
+CC0019,257.217,8.73511,end,2,n/a,n/a,Black-looking hole at end of collapse trough
+CC0020,254.7465,4.56909,end,3,n/a,n/a,Channel tip
+CC0021,255.4132,1.83636,end,0,n/a,n/a,Large trough with overhang at end
+CC0022,253.6738,6.23682,end,3,n/a,n/a,End of collapse trough
+CC0023,254.9862,1.24988,end,2,n/a,n/a,Hole in end of collapse trough
+CC0024,241.7553,-14.18007,end,2,n/a,n/a,possible vent?
+CC0025,240.8302,-6.68977,end,1,n/a,n/a,"Pit at end of trough, possibly under overhang"
+CC0026,284.588,28.78819,end,1,n/a,n/a,Kasei Fracture Tip Cave ~ strong ~ i=49
+CC0027,139.3868,30.01179,flr,2,n/a,n/a,pit in trough floor
+CC0028,140.9491,30.24073,flr,2,n/a,n/a,"depression in fracture floor, overhang?"
+CC0029,243.0532,-3.87207,flr,2,n/a,n/a,Pit in channel floor
+CC0030,243.7738,-6.1698,flr,2,n/a,n/a,Pit in channel flor skylight
+CC0031,244.1912,-7.70654,flr,3,n/a,n/a,"Channel center deep pit, impact?"
+CC0032,248.9462,1.86311,flr,2,n/a,n/a,Pit floor pits
+CC0033,245.393,-7.18535,flr,2,n/a,n/a,channel floor center
+CC0034,248.7941,-1.1727,flr,3,n/a,n/a,Channel edge floor
+CC0035,348.877,29.64915,flr,3,n/a,n/a,Channel floor dark pit
+CC0036,244.1758,-6.94916,flr,3,n/a,n/a,Channel edge
+CC0037,254.474,5.11572,flr,3,n/a,n/a,Channel edge pit
+CC0038,257.3432,5.73541,flr,3,n/a,n/a,crater in channel with deep central pit
+CC0039,253.4385,3.02271,flr,3,n/a,n/a,channel floor candidate
+CC0040,258.0972,10.92065,flr,3,n/a,n/a,Channel pit
+CC0041,252.6796,7.66431,flr,2,n/a,n/a,Good channel edge candidate
+CC0042,259.5123,10.63947,flr,3,n/a,n/a,Channel floor
+CC0043,257.6639,8.43481,flr,3,n/a,n/a,Channel floor
+CC0044,254.9085,1.14233,flr,3,n/a,n/a,Sun-facing shadows in channel floor
+CC0045,259.2913,9.02863,flr,3,n/a,n/a,channel small rimless pit next to impact
+CC0046,252.8507,4.56213,flr,2,n/a,n/a,small dark small rimless pit in channel center
+CC0047,254.0222,4.28308,flr,3,n/a,n/a,Line of pits in vent channel
+CC0048,244.6436,-6.98201,flr,2,n/a,n/a,channel floor hole
+CC0049,241.0852,-15.71522,flr,3,n/a,n/a,channel floor smrp
+CC0050,242.551,-19.72817,flr,2,n/a,n/a,channel floor pinholes
+CC0051,242.5505,-19.72805,flr,2,n/a,n/a,channel floor pinholes
+CC0052,243.5963,-8.1178,flr,3,n/a,n/a,graben-channel intersection
+CC0053,241.3721,-12.27734,flr,2,n/a,n/a,channel edge / floor
+CC0054,242.8667,-14.46582,flr,3,n/a,n/a,channel floor center
+CC0055,243.0704,-18.35437,flr,1,n/a,n/a,channel floor smrp
+CC0056,257.5163,16.90201,flr,3,n/a,n/a,Possible small pit at channel floor edge
+CC0057,240.5676,-15.09371,crk,1,n/a,n/a,Similar to North of Arsia
+CC0058,240.5514,-15.09529,crk,1,n/a,n/a,Similar to North of Arsia
+CC0059,240.5497,-15.09581,crk,1,n/a,n/a,Similar to North of Arsia
+CC0060,302.8489,27.01245,crk,2,n/a,n/a,Kasei collapse region i=65
+CC0061,302.8446,27.06726,crk,2,n/a,n/a,Kasei collapse region i=65
+CC0062,303.4306,27.04687,crk,2,n/a,n/a,Kasei collapse region i=42
+CC0063,296.074,22.48661,crk,2,n/a,n/a,Kasei collapse region i=42 - dusty fracture
+CC0064,296.5302,32.0254,crk,3,n/a,n/a,Kasei narrow collapse fractures
+CC0065,296.7098,31.91345,crk,2,n/a,n/a,Kasei narrow collapse fractures
+CC0066,240.0261,35.11383,flr,0,n/a,n/a,candidates at edge of graben floor
+CC0067,240.0174,35.1217,flr,0,n/a,n/a,candidates at edge of graben floor
+CC0068,240.0207,35.12909,flr,0,n/a,n/a,candidates at edge of graben floor
+CC0069,245.3593,-7.14942,irr,2,n/a,n/a,irregular cavity in flow surface
+CC0070,242.3995,-10.20605,irr,3,n/a,n/a,"black triangular spot, maybe just albedo"
+CC0071,251.5122,-1.24042,irr,3,n/a,n/a,irregular pit
+CC0072,252.3458,4.54346,irr,3,n/a,n/a,irregular smrp
+CC0073,251.7856,5.59863,irr,3,n/a,n/a,black spots in dark wind streaks
+CC0074,255.9219,1.86072,irr,2,n/a,n/a,irregular black spot - hole or albedo?
+CC0075,259.9213,-0.70435,irr,3,n/a,n/a,Very black hole in hilltop?
+CC0076,252.0122,2.1377,irr,2,n/a,n/a,irregular black spot  - induces wind streak
+CC0077,258.0194,9.32043,irr,3,n/a,n/a,irregular dark spot - hole or impact?
+CC0078,258.1787,12.9342,irr,3,n/a,n/a,irregular candidate in flow
+CC0079,257.0233,8.88483,irr,3,n/a,n/a,Features in complex flow terrain
+CC0080,231.3509,3.34698,irr,3,n/a,n/a,Irregular small rimless pit
+CC0081,237.3735,-2.84131,irr,3,n/a,n/a,channel
+CC0082,230.4404,1.96167,irr,3,n/a,n/a,alt candidate
+CC0083,234.6204,0.04688,irr,2,n/a,n/a,skylight
+CC0084,240.9683,-17.63391,irr,2,n/a,n/a,channel wall features
+CC0085,243.7784,-16.42139,irr,3,n/a,n/a,Small rimless pit
+CC0086,241.9454,-12.58533,irr,2,n/a,n/a,small rimless pit in pit
+CC0087,241.751,-12.32632,irr,2,n/a,n/a,small rimless pit -- irregular
+CC0088,241.8182,-16.90973,irr,2,n/a,n/a,along edge of flow
+CC0089,127.1378,21.36868,irr,1,n/a,n/a,collapsed floor of collapse pit
+CC0090,296.5162,31.0012,irr,2,n/a,n/a,Kasei circular pit near impact and flows
+CC0091,258.0906,9.14453,lat,3,n/a,n/a,Surface lateral-entrance candidate
+CC0092,258.9501,6.95557,lat,2,n/a,n/a,lateral candidate in flow
+CC0093,255.9496,8.86151,lat,0,n/a,n/a,lateral candidate - overhanging ledge
+CC0094,255.1474,8.04544,lat,3,n/a,n/a,Structure at trough/graben intersect
+CC0095,256.3721,7.44781,lat,3,n/a,n/a,lateral candidate in channel with albedo
+CC0096,239.0162,6.24792,lat,3,n/a,n/a,Lateral
+CC0097,238.553,-5.14594,lat,1,n/a,n/a,"interesting, in hillside"
+CC0098,232.8676,-2.57013,sky,3,n/a,n/a,near tube
+CC0099,232.8634,-2.57022,sky,2,n/a,n/a,near tube
+CC0100,232.8579,-2.58188,sky,3,n/a,n/a,near tube
+CC0101,232.8484,-2.5773,sky,3,n/a,n/a,near tube
+CC0102,232.8315,-2.56311,sky,2,n/a,n/a,near tube
+CC0103,232.8288,-2.56918,sky,3,n/a,n/a,near tube
+CC0104,142.9086,24.38637,pin,2,n/a,n/a,Channel floor pinhole
+CC0105,139.7075,29.90159,pin,2,n/a,n/a,pair of pinholes near Elysium
+CC0106,139.7069,29.90117,pin,2,n/a,n/a,pair of pinholes near Elysium
+CC0107,143.6697,28.13364,pin,2,n/a,n/a,channel floor pinhole
+CC0108,234.7292,-15.40447,pin,1,n/a,n/a,Pinhole tube skylight
+CC0109,242.6782,-1.87439,pin,1,n/a,n/a,25m black hole in surface (i=58)
+CC0110,243.0272,-4.93567,pin,2,n/a,n/a,"Dark pinhole, but i=58"
+CC0111,245.9289,-3.63776,pin,2,n/a,n/a,pinhole
+CC0112,250.648,-2.35629,pin,2,n/a,n/a,pinhole
+CC0113,245.1383,-7.48205,pin,2,n/a,n/a,pinhole
+CC0114,244.9697,-4.14102,pin,2,n/a,n/a,pinhole
+CC0115,245.4029,-7.02953,pin,2,n/a,n/a,pinhole
+CC0116,248.6759,-1.36548,pin,1,n/a,n/a,pinhole
+CC0117,248.0916,-7.05604,pin,3,n/a,n/a,pinhole in channel
+CC0118,248.2551,-6.97576,pin,3,n/a,n/a,pinhole
+CC0119,244.6343,-4.5385,pin,3,n/a,n/a,pinhole
+CC0120,244.6654,-4.54498,pin,3,n/a,n/a,pinhole
+CC0121,244.6671,-4.54593,pin,3,n/a,n/a,pinhole
+CC0122,349.6701,31.04885,pin,3,n/a,n/a,pinhole
+CC0123,348.9445,34.03847,pin,3,n/a,n/a,pinhole
+CC0124,248.7327,-2.20276,pin,3,n/a,n/a,pinhole
+CC0125,242.3269,-2.62305,pin,1,n/a,n/a,Pinhole pair near flow margin
+CC0126,242.3265,-2.62385,pin,1,n/a,n/a,Pinhole pair near flow margin
+CC0127,247.1965,-4.64502,pin,2,n/a,n/a,pinhole
+CC0128,251.7214,-3.78595,pin,3,n/a,n/a,pinhole along crack
+CC0129,251.699,-3.8013,pin,3,n/a,n/a,Channel edge pinhole
+CC0130,259.6215,3.93805,pin,3,n/a,n/a,pinhole in lava flow ridge
+CC0131,252.1619,-1.47308,pin,3,n/a,n/a,Pinhole next to impact - tube breach?
+CC0132,252.4771,-2.16699,pin,3,n/a,n/a,Pinhole
+CC0133,259.195,12.6026,pin,3,n/a,n/a,Pinhole with dark halo - impact?
+CC0134,236.0971,1.00702,pin,3,n/a,n/a,Pinhole at channel edge
+CC0135,236.2746,-0.4982,pin,3,n/a,n/a,Pinhole
+CC0136,237.256,-0.37646,pin,3,n/a,n/a,ph
+CC0137,236.4375,0.41406,pin,1,n/a,n/a,ph
+CC0138,236.3991,-0.47119,pin,3,n/a,n/a,ph
+CC0139,236.4189,-0.46893,pin,2,n/a,n/a,ph
+CC0140,236.616,-0.46008,pin,1,n/a,n/a,skylight
+CC0141,236.6287,-0.46082,pin,3,n/a,n/a,skylight
+CC0142,235.3668,-3.19925,pin,2,n/a,n/a,pinhole
+CC0143,239.1991,-4.14209,pin,2,n/a,n/a,good pinhole with small inc
+CC0144,232.9343,-5.4028,pin,3,n/a,n/a,pinhole with wind streak
+CC0145,232.3659,-3.11479,pin,3,n/a,n/a,in trough
+CC0146,246.3747,-15.76774,pin,2,n/a,n/a,pretty good
+CC0147,243.807,-16.50171,pin,3,n/a,n/a,pinhole
+CC0148,241.8903,-12.65515,pin,1,n/a,n/a,pinhole smrp
+CC0149,245.584,-16.93701,pin,1,n/a,n/a,pinhole
+CC0150,241.4282,-13.55713,pin,2,n/a,n/a,pinhole
+CC0151,241.7544,-13.5144,pin,3,n/a,n/a,pinhole
+CC0152,241.9587,-14.28955,pin,1,n/a,n/a,sharp pinhole
+CC0153,241.8709,-16.8783,pin,3,n/a,n/a,pinhole
+CC0154,241.8452,-16.82544,pin,2,n/a,n/a,pinhole
+CC0155,241.9429,-17.46875,pin,3,n/a,n/a,pinhole
+CC0156,242.0333,-17.73975,pin,3,n/a,n/a,pinhole
+CC0157,241.9315,-17.69006,pin,2,n/a,n/a,pinhole
+CC0158,242.0615,-1.96589,pin,2,n/a,n/a,pinhole trio
+CC0159,143.5983,24.89327,pit,2,n/a,n/a,Deep irregular pit
+CC0160,143.601,24.89458,pit,2,n/a,n/a,Deep irregular pit
+CC0161,143.6252,24.90615,pit,3,n/a,n/a,Deep trough
+CC0162,142.9144,24.41136,pit,3,n/a,n/a,shadowed pit at channel edge
+CC0163,143.8395,25.36105,pit,3,n/a,n/a,irregular pit in graben floor
+CC0164,142.5939,25.54324,pit,3,n/a,n/a,Possible developing pit crater
+CC0165,142.8262,24.50087,pit,2,n/a,n/a,developing pit along fracture
+CC0166,141.2039,29.2438,pit,2,n/a,n/a,Deep portion of fracture
+CC0167,233.4368,-3.68384,pit,1,n/a,n/a,pit in trough floor center
+CC0168,241.0054,-7.16223,pit,3,n/a,n/a,Pit at end of trough
+CC0169,302.8449,26.96051,pit,3,n/a,n/a,Kasei collapse region - i=65
+CC0170,302.8437,26.95541,pit,3,n/a,n/a,Kasei collapse region i=65
+CC0171,302.957,26.96228,pit,3,n/a,n/a,Kasei collapse region i=65
+CC0172,302.9159,27.50427,pit,3,n/a,n/a,Kasei collapse region i=46
+CC0173,4.1676,-32.99807,pit,3,n/a,n/a,Old crater fill
+CC0174,4.1691,-33.00131,pit,2,n/a,n/a,Old crater fill
+CC0175,4.1411,-32.99782,pit,2,n/a,n/a,Old crater fill
+CC0176,4.1683,-32.98055,pit,3,n/a,n/a,Old crater fill
+CC0177,4.121,-32.99309,pit,3,n/a,n/a,Old crater fill
+CC0178,4.1692,-32.97085,pit,3,n/a,n/a,Old crater fill
+CC0179,4.9766,-39.38928,pit,3,n/a,n/a,Old crater fill
+CC0180,4.9805,-39.38977,pit,3,n/a,n/a,Old crater fill
+CC0181,4.9765,-39.38611,pit,3,n/a,n/a,Old crater fill
+CC0182,141.0245,29.25533,rim,2,n/a,n/a,lateral rim candidate
+CC0183,140.9895,29.28374,rim,2,n/a,n/a,lateral rim candidate
+CC0184,140.9751,29.29048,rim,2,n/a,n/a,lateral rim candidate
+CC0185,143.532,27.97803,rim,3,n/a,n/a,halfway up wall
+CC0186,143.6439,27.89038,rim,3,n/a,n/a,halfway up wall
+CC0187,150.2491,23.5704,rim,2,n/a,n/a,overhang at intersection
+CC0188,252.1713,17.43581,rim,2,n/a,n/a,40m Channel edge - possible impact
+CC0189,256.9753,12.65629,rim,1,n/a,n/a,Hole in bright sun-facing wall?
+CC0190,249.7366,-2.19226,rim,1,n/a,n/a,Channel wall sun-facing deep shadows
+CC0191,246.7056,-1.22217,rim,3,n/a,n/a,"pit rim edge, vent?"
+CC0192,259.0872,6.45959,rim,3,n/a,n/a,Channel edge
+CC0193,251.3528,8.64832,rim,3,n/a,n/a,lateral candidate in cliff face
+CC0194,255.5392,1.71909,rim,0,n/a,n/a,lateral candidate in large collapse pit
+CC0195,254.17,4.93054,rim,2,n/a,n/a,channel rim sun-facing hole
+CC0196,254.125,4.88464,rim,3,n/a,n/a,channel rim sun-facing hole
+CC0197,253.6277,8.62518,rim,3,n/a,n/a,Possible overhang at trough end
+CC0198,255.262,0.36615,rim,2,n/a,n/a,Sun-facing dark channel rim pit
+CC0199,255.3326,0.52588,rim,3,n/a,n/a,Sun-facing shadows in channel rim
+CC0200,253.1057,8.85526,rim,2,n/a,n/a,upper-rim candidate in fracture network
+CC0201,238.6487,4.25684,rim,3,n/a,n/a,Channel rim candidate
+CC0202,238.6481,4.24995,rim,3,n/a,n/a,Channel rim candidate
+CC0203,239.3931,-10.21545,rim,0,n/a,n/a,"Arsia southern rim, 60x30"
+CC0204,258.8024,13.74237,rim,1,n/a,n/a,Channel rim pit
+CC0205,252.2953,19.61151,rim,2,n/a,n/a,Channel intersection candidates
+CC0206,141.3119,30.56471,irr,0,n/a,n/a,"dark, sharp-edge hole in surface"
+CC0207,237.7901,-2.94233,sky,2,n/a,n/a,Skylight
+CC0208,235.9786,-3.88153,sky,2,n/a,n/a,Tube skylight at base of NW Arsia
+CC0209,235.973,-3.8749,sky,2,n/a,n/a,Tube skylight at base of NW Arsia
+CC0210,235.9077,-3.84704,sky,2,n/a,n/a,Tube skylight at base of NW Arsia
+CC0211,235.8737,-3.81203,sky,1,n/a,n/a,Tube skylight at base of NW Arsia
+CC0212,235.8586,-3.80266,sky,2,n/a,n/a,Tube skylight at base of NW Arsia
+CC0213,235.849,-3.79186,sky,2,n/a,n/a,Tube skylight at base of NW Arsia
+CC0214,238.7192,-3.53171,sky,1,n/a,n/a,good 20m tube skylight
+CC0215,231.4744,-1.0625,sky,2,n/a,n/a,Skylight or secondary?
+CC0216,231.4744,-1.06311,sky,2,n/a,n/a,Skylight or secondary?
+CC0217,233.052,-0.09827,sky,2,n/a,n/a,candidate tube skylight
+CC0218,233.0662,-0.0939,sky,2,n/a,n/a,candidate tube skylight
+CC0219,233.069,-0.09191,sky,3,n/a,n/a,candidate tube skylight
+CC0220,233.086,-0.09179,sky,1,n/a,n/a,candidate tube skylight
+CC0221,239.6554,-11.51587,sky,0,n/a,n/a,skylight off Arsia south flank
+CC0222,239.065,-13.32391,sky,1,n/a,n/a,initial surface breach?
+CC0223,234.3142,-11.47247,sky,1,n/a,n/a,inflated flow skylight candidate --
+CC0224,236.9274,-4.07337,sky,1,n/a,n/a,Skylight pair (srp?) - Arsia off flank
+CC0225,236.9281,-4.07527,sky,1,n/a,n/a,Skylight pair (srp?) - Arsia off flank
+CC0226,236.1968,-3.2384,sky,3,n/a,n/a,Skylight
+CC0227,236.1966,-3.24085,sky,3,n/a,n/a,Skylight
+CC0228,236.2019,-3.25931,sky,1,n/a,n/a,Skylight
+CC0229,236.2041,-3.26335,sky,1,n/a,n/a,Skylight
+CC0230,236.2026,-3.26965,sky,2,n/a,n/a,Skylight
+CC0231,236.202,-3.271,sky,2,n/a,n/a,Skylight
+CC0232,236.2073,-3.27386,sky,2,n/a,n/a,Skylight
+CC0233,236.213,-3.27304,sky,1,n/a,n/a,Skylight
+CC0234,236.2269,-3.27776,sky,2,n/a,n/a,Skylight
+CC0235,236.2325,-3.28107,sky,2,n/a,n/a,Skylight
+CC0236,236.2371,-3.2932,sky,1,n/a,n/a,Skylight
+CC0237,236.2495,-3.30621,sky,1,n/a,n/a,Skylight
+CC0238,236.2612,-3.30982,sky,1,n/a,n/a,Skylight
+CC0239,236.2806,-3.34606,sky,2,n/a,n/a,Skylight
+CC0240,236.2826,-3.35328,sky,2,n/a,n/a,Skylight
+CC0241,236.2839,-3.36976,sky,1,n/a,n/a,Skylight
+CC0242,236.2884,-3.37601,sky,1,n/a,n/a,Skylight
+CC0243,236.2986,-3.39853,sky,3,n/a,n/a,Skylight
+CC0244,236.3006,-3.4129,sky,3,n/a,n/a,Skylight
+CC0245,236.3041,-3.42664,sky,2,n/a,n/a,Skylight
+CC0246,236.3052,-3.42755,sky,2,n/a,n/a,Skylight
+CC0247,236.3185,-3.47152,sky,3,n/a,n/a,Skylight
+CC0248,236.3328,-3.49195,sky,2,n/a,n/a,Skylight
+CC0249,236.339,-3.49398,sky,1,n/a,n/a,Skylight
+CC0250,236.3663,-3.5139,sky,1,n/a,n/a,Skylight
+CC0251,236.3725,-3.52102,sky,2,n/a,n/a,Skylight
+CC0252,236.4863,-3.42105,sky,3,n/a,n/a,Skylight
+CC0253,248.4829,3.75879,sky,0,n/a,n/a,Famous pit-floor cave on Pavonis
+CC0254,243.448,17.93182,sky,1,n/a,n/a,Possible vent hole with attached tube or dike
+CC0255,240.8051,0.83864,sky,1,n/a,n/a,skylight as wide as channel in flood lavas
+CC0256,250.5591,6.30237,sky,0,n/a,n/a,Lavatube impact NW
+CC0257,250.5629,6.29941,sky,0,n/a,n/a,Lavatube impact SE
+CC0258,243.6018,12.2741,sky,3,n/a,n/a,Small hole in surface?
+CC0259,242.5594,7.67303,sky,1,n/a,n/a,Graben-edge 170x300m pit with strong overhang
+CC0260,242.6543,-2.0575,sky,3,n/a,n/a,pit in channel
+CC0261,240.7144,-1.3075,sky,2,n/a,n/a,Tube skylight
+CC0262,241.3507,-5.36182,sky,3,n/a,n/a,Deep black shadow in lava ridge
+CC0263,241.0775,-3.00806,sky,2,n/a,n/a,Skylight between impact craters?
+CC0264,246.4419,-1.77197,sky,2,n/a,n/a,200m lava structure w/ candidate?
+CC0265,248.8112,-3.67224,sky,1,n/a,n/a,Skylight in channel
+CC0266,246.2441,-8.46655,sky,3,n/a,n/a,Tube skylight
+CC0267,245.9441,-5.54462,sky,3,n/a,n/a,unusual dark pit alongside channel
+CC0268,246.5618,-7.42236,sky,2,n/a,n/a,Channel edge cliff skylight
+CC0269,250.5435,-0.22037,sky,3,n/a,n/a,candidate in inverted channel
+CC0270,248.0475,-8.22035,sky,1,n/a,n/a,Tube skylight pair
+CC0271,248.0475,-8.22235,sky,1,n/a,n/a,Tube skylight pair
+CC0272,348.9619,34.21344,sky,0,n/a,n/a,Tube?
+CC0273,248.6138,-2.17212,sky,1,n/a,n/a,hole in top of cone
+CC0274,242.1563,-2.37024,sky,0,n/a,n/a,Line of trench pits
+CC0275,242.1466,-2.33789,sky,0,n/a,n/a,Trench pit
+CC0276,242.2905,-2.48511,sky,0,n/a,n/a,Trench pit
+CC0277,249.978,-1.39307,sky,1,n/a,n/a,skylight
+CC0278,250.1003,-0.28812,sky,1,n/a,n/a,skylight
+CC0279,256.5748,5.59705,sky,3,n/a,n/a,tube skylight candidate
+CC0280,256.6456,1.63025,sky,2,n/a,n/a,black circular hole in possible tube
+CC0281,259.4139,3.17889,sky,1,n/a,n/a,Deep hole in channel
+CC0282,257.1561,8.74231,sky,3,n/a,n/a,Skylight
+CC0283,258.4109,11.49976,sky,2,n/a,n/a,tube skylight
+CC0284,258.9436,13.13708,sky,3,n/a,n/a,Tube skylight candidate
+CC0285,252.5131,-2.03632,sky,3,n/a,n/a,Tube skylight candidate
+CC0286,254.1409,11.7179,sky,3,n/a,n/a,Pit spanning lava tube or impact
+CC0287,256.8087,6.9079,sky,2,n/a,n/a,Tube skylight
+CC0288,231.8906,-0.93933,sky,1,n/a,n/a,Lateral tube skylight
+CC0289,231.8988,-0.93726,sky,2,n/a,n/a,Lateral tube skylight
+CC0290,231.8915,-0.96289,sky,3,n/a,n/a,Tube skylight candidate
+CC0291,231.8889,-0.98853,sky,2,n/a,n/a,Tube skylight
+CC0292,235.5515,0.7771,sky,1,n/a,n/a,Solid looking lava tube skylight
+CC0293,235.5508,0.7811,sky,2,n/a,n/a,Solid looking lava tube skylight
+CC0294,236.696,-2.77124,sky,2,n/a,n/a,Tube skylight
+CC0295,236.655,-2.72278,sky,3,n/a,n/a,Tube skylight
+CC0296,236.224,-1.47278,sky,2,n/a,n/a,Skylight
+CC0297,236.243,-1.47925,sky,2,n/a,n/a,Skylight
+CC0298,236.2111,-1.48438,sky,2,n/a,n/a,Skylight
+CC0299,236.1482,-1.46228,sky,1,n/a,n/a,Skylight
+CC0300,236.2094,-1.47205,sky,1,n/a,n/a,Skylight
+CC0301,236.1982,-1.47437,sky,1,n/a,n/a,Skylight
+CC0302,236.2322,-1.47644,sky,1,n/a,n/a,Skylight
+CC0303,236.245,-1.46997,sky,1,n/a,n/a,Skylight
+CC0304,236.3029,-1.41553,sky,0,n/a,n/a,Skylight
+CC0305,236.4304,-1.38672,sky,0,n/a,n/a,Skylight
+CC0306,236.4329,-1.38782,sky,0,n/a,n/a,Skylight
+CC0307,236.4423,-1.39038,sky,0,n/a,n/a,Skylight
+CC0308,236.4658,-1.42175,sky,0,n/a,n/a,Skylight
+CC0309,236.4961,-1.45618,sky,2,n/a,n/a,Skylight
+CC0310,236.5104,-1.48071,sky,3,n/a,n/a,Skylight
+CC0311,236.5547,-1.49048,sky,3,n/a,n/a,Skylight
+CC0312,236.5421,-2.30566,sky,2,n/a,n/a,skylight
+CC0313,236.5575,-2.31165,sky,2,n/a,n/a,Skylight
+CC0314,236.5989,-2.32861,sky,2,n/a,n/a,Skylight
+CC0315,235.9642,0.94824,sky,2,n/a,n/a,Skylight
+CC0316,236.0115,0.96649,sky,2,n/a,n/a,Skylight
+CC0317,236.035,0.9762,sky,2,n/a,n/a,Skylight
+CC0318,236.0426,0.97687,sky,2,n/a,n/a,Skylight
+CC0319,236.9258,-0.44495,sky,3,n/a,n/a,skylight
+CC0320,236.8989,-0.44836,sky,3,n/a,n/a,skylight
+CC0321,236.8247,-0.45752,sky,2,n/a,n/a,skylight
+CC0322,236.8214,-0.45996,sky,3,n/a,n/a,skylight
+CC0323,236.7699,-0.46796,sky,1,n/a,n/a,skylight
+CC0324,236.741,-0.4765,sky,1,n/a,n/a,skylight
+CC0325,236.6554,-0.4646,sky,3,n/a,n/a,skylight
+CC0326,236.6118,-0.461,sky,2,n/a,n/a,pinhole skylight
+CC0327,236.5773,-0.44562,sky,2,n/a,n/a,skylight
+CC0328,237.0136,-0.38892,sky,2,n/a,n/a,skylight
+CC0329,237.2437,-2.02808,sky,2,n/a,n/a,skylight
+CC0330,237.2688,-2.55786,sky,3,n/a,n/a,skylight
+CC0331,237.3424,-2.60449,sky,1,n/a,n/a,skylight
+CC0332,237.3706,-2.64734,sky,2,n/a,n/a,skylight
+CC0333,237.4122,-2.68079,sky,3,n/a,n/a,skylight
+CC0334,237.4297,-2.7019,sky,3,n/a,n/a,skylight
+CC0335,237.5623,-2.7793,sky,2,n/a,n/a,skylight
+CC0336,237.5844,-2.78943,sky,2,n/a,n/a,skylight
+CC0337,237.6642,-2.86365,sky,2,n/a,n/a,skylight
+CC0338,235.6509,0.82007,sky,3,n/a,n/a,skylight
+CC0339,235.6792,0.83447,sky,3,n/a,n/a,skylight
+CC0340,235.7666,0.90088,sky,3,n/a,n/a,skylight
+CC0341,235.7495,-0.39685,sky,2,n/a,n/a,skylight
+CC0342,235.8695,-1.44678,sky,3,n/a,n/a,skylight
+CC0343,235.8746,-1.44653,sky,3,n/a,n/a,skylight
+CC0344,235.9563,-1.45911,sky,1,n/a,n/a,skylight
+CC0345,235.9785,-1.46143,sky,1,n/a,n/a,skylight
+CC0346,236.0981,1.3894,sky,1,n/a,n/a,skylight
+CC0347,236.3474,0.56958,sky,2,n/a,n/a,Skylight
+CC0348,236.3306,0.59424,sky,0,n/a,n/a,Skylight
+CC0349,236.5813,-0.4447,sky,1,n/a,n/a,skylight
+CC0350,236.6598,-0.46313,sky,2,n/a,n/a,skylight
+CC0351,236.5657,-1.4953,sky,2,n/a,n/a,skylight
+CC0352,236.5622,-1.49628,sky,3,n/a,n/a,skylight
+CC0353,236.5744,-1.49963,sky,1,n/a,n/a,skylight
+CC0354,236.571,-1.50171,sky,2,n/a,n/a,skylight
+CC0355,236.5533,-1.49161,sky,2,n/a,n/a,skylight
+CC0356,236.7239,-1.60156,sky,3,n/a,n/a,skylight
+CC0357,236.7451,-2.34644,sky,2,n/a,n/a,skylight
+CC0358,236.9183,-2.82141,sky,1,n/a,n/a,skylight
+CC0359,236.9384,-2.82422,sky,2,n/a,n/a,skylight
+CC0360,236.9666,-2.8335,sky,3,n/a,n/a,skylight
+CC0361,236.8459,-2.41782,sky,2,n/a,n/a,skylight
+CC0362,236.6997,-0.74756,sky,1,n/a,n/a,inflated flow skylight
+CC0363,234.5784,0.44641,sky,2,n/a,n/a,skylight
+CC0364,234.666,0.48364,sky,2,n/a,n/a,skylight
+CC0365,234.6565,0.47278,sky,2,n/a,n/a,skylight
+CC0366,234.6541,0.47131,sky,2,n/a,n/a,skylight
+CC0367,234.6281,0.46216,sky,2,n/a,n/a,skylight
+CC0368,234.6502,0.34631,sky,1,n/a,n/a,Small rimless pit
+CC0369,234.6997,-0.00977,sky,2,n/a,n/a,skylight
+CC0370,234.7078,-0.02905,sky,2,n/a,n/a,skylight
+CC0371,234.7542,-0.08203,sky,2,n/a,n/a,skylight
+CC0372,234.7872,-0.27966,sky,3,n/a,n/a,skylight
+CC0373,234.589,-0.28369,sky,2,n/a,n/a,skylight
+CC0374,234.6533,-0.27771,sky,3,n/a,n/a,skylight
+CC0375,234.6444,-0.6842,sky,3,n/a,n/a,skylight
+CC0376,234.7661,-0.70105,sky,2,n/a,n/a,skylight
+CC0377,234.8262,-0.70825,sky,3,n/a,n/a,skylight
+CC0378,237.9574,-1.46094,sky,2,n/a,n/a,skylight
+CC0379,237.9565,-1.45911,sky,2,n/a,n/a,skylight
+CC0380,237.9529,-1.45691,sky,2,n/a,n/a,skylight
+CC0381,237.954,-1.45508,sky,2,n/a,n/a,skylight
+CC0382,237.9534,-1.45325,sky,2,n/a,n/a,skylight
+CC0383,237.9534,-1.45129,sky,2,n/a,n/a,skylight
+CC0384,237.9523,-1.44995,sky,2,n/a,n/a,skylight
+CC0385,237.9482,-1.44446,sky,3,n/a,n/a,skylight
+CC0386,237.9491,-1.44275,sky,3,n/a,n/a,skylight
+CC0387,234.6398,0.97668,sky,1,n/a,n/a,skylight
+CC0388,234.7073,0.49927,sky,2,n/a,n/a,skylight
+CC0389,234.7289,0.49,sky,1,n/a,n/a,skylight
+CC0390,234.7329,0.49048,sky,1,n/a,n/a,skylight
+CC0391,234.7332,0.48523,sky,2,n/a,n/a,ph
+CC0392,234.7769,0.47864,sky,2,n/a,n/a,skylight
+CC0393,234.9051,0.42365,sky,2,n/a,n/a,skylight
+CC0394,234.8965,-0.30908,sky,1,n/a,n/a,skylight
+CC0395,234.9667,-0.79126,sky,2,n/a,n/a,skylight
+CC0396,235.02,-2.61353,sky,3,n/a,n/a,skylight
+CC0397,235.0322,-2.62354,sky,3,n/a,n/a,skylight
+CC0398,235.3207,-2.71576,sky,2,n/a,n/a,skylight
+CC0399,235.0638,-2.57727,sky,3,n/a,n/a,skylight
+CC0400,234.9499,-2.55002,sky,3,n/a,n/a,skylight
+CC0401,235.1351,-3.11353,sky,2,n/a,n/a,skylight
+CC0402,235.1794,-3.12842,sky,2,n/a,n/a,skylight
+CC0403,235.1892,-3.13107,sky,1,n/a,n/a,skylight
+CC0404,235.5005,-3.30127,sky,3,n/a,n/a,skylight
+CC0405,235.4934,-3.29761,sky,2,n/a,n/a,skylight
+CC0406,235.4883,-3.29688,sky,2,n/a,n/a,skylight
+CC0407,235.4607,-3.27222,sky,1,n/a,n/a,skylight
+CC0408,235.3623,-3.19678,sky,2,n/a,n/a,skylight
+CC0409,235.3469,-3.20654,sky,1,n/a,n/a,skylight
+CC0410,235.0244,0.57617,sky,2,n/a,n/a,skylight
+CC0411,234.0429,0.87329,sky,2,n/a,n/a,skylight
+CC0412,234.2773,0.53442,sky,2,n/a,n/a,skylight
+CC0413,234.2769,0.53687,sky,2,n/a,n/a,skylight
+CC0414,234.2354,0.53979,sky,1,n/a,n/a,skylight
+CC0415,234.239,0.54199,sky,1,n/a,n/a,skylight
+CC0416,344.2138,0.53928,sky,3,n/a,n/a,skylight
+CC0417,233.9453,0.55078,sky,2,n/a,n/a,skylight
+CC0418,234.0772,0.1958,sky,2,n/a,n/a,skylight
+CC0419,234.1011,0.07813,sky,2,n/a,n/a,skylight
+CC0420,234.4329,-0.24756,sky,1,n/a,n/a,skylight
+CC0421,234.3804,-0.20679,sky,3,n/a,n/a,skylight
+CC0422,234.3762,-0.20288,sky,2,n/a,n/a,skylight
+CC0423,234.3289,-0.16151,sky,2,n/a,n/a,skylight
+CC0424,234.3225,-0.15259,sky,3,n/a,n/a,skylight
+CC0425,234.321,-0.14941,sky,2,n/a,n/a,skylight
+CC0426,234.3142,-0.13574,sky,2,n/a,n/a,skylight
+CC0427,234.3142,-0.13281,sky,2,n/a,n/a,skylight
+CC0428,234.3035,-0.12427,sky,2,n/a,n/a,skylight
+CC0429,234.4128,-0.23828,sky,2,n/a,n/a,skylight
+CC0430,234.2665,-0.12085,sky,1,n/a,n/a,skylight
+CC0431,234.2644,-0.1228,sky,2,n/a,n/a,skylight
+CC0432,234.2064,-0.10571,sky,1,n/a,n/a,skylight
+CC0433,234.2047,-0.10559,sky,1,n/a,n/a,skylight
+CC0434,234.202,-0.10547,sky,1,n/a,n/a,skylight
+CC0435,234.2015,-0.09424,sky,1,n/a,n/a,skylight
+CC0436,234.1965,-0.08777,sky,1,n/a,n/a,skylight
+CC0437,234.187,-0.05212,sky,2,n/a,n/a,skylight
+CC0438,234.1851,-0.04224,sky,2,n/a,n/a,skylight
+CC0439,234.1831,-0.03943,sky,1,n/a,n/a,skylight
+CC0440,234.1646,0.00781,sky,2,n/a,n/a,skylight
+CC0441,234.1626,0.01099,sky,2,n/a,n/a,skylight
+CC0442,234.1608,0.01172,sky,2,n/a,n/a,skylight
+CC0443,234.1576,0.01465,sky,2,n/a,n/a,skylight
+CC0444,234.3075,-0.01155,sky,3,n/a,n/a,skylight
+CC0445,234.3085,-0.01246,sky,3,n/a,n/a,skylight
+CC0446,234.3208,-0.01929,sky,2,n/a,n/a,skylight
+CC0447,234.3237,-0.02393,sky,2,n/a,n/a,skylight
+CC0448,234.3262,-0.02832,sky,3,n/a,n/a,skylight
+CC0449,234.3289,-0.03418,sky,2,n/a,n/a,skylight
+CC0450,234.335,-0.04102,sky,3,n/a,n/a,skylight
+CC0451,234.3491,-0.06079,sky,2,n/a,n/a,skylight
+CC0452,234.193,-0.55615,sky,3,n/a,n/a,skylight
+CC0453,234.2009,-0.55774,sky,2,n/a,n/a,skylight
+CC0454,234.118,-0.56531,sky,3,n/a,n/a,skylight
+CC0455,234.3103,-0.55786,sky,2,n/a,n/a,skylight
+CC0456,234.2954,-0.48926,sky,2,n/a,n/a,skylight
+CC0457,234.4155,-0.65698,sky,1,n/a,n/a,skylight
+CC0458,234.3928,-0.64648,sky,2,n/a,n/a,skylight
+CC0459,234.3301,-0.6167,sky,2,n/a,n/a,skylight
+CC0460,234.3191,-0.66211,sky,2,n/a,n/a,skylight
+CC0461,234.3179,-1.01831,sky,1,n/a,n/a,skylight
+CC0462,234.3457,0.06494,sky,1,n/a,n/a,skylight
+CC0463,234.3471,0.06494,sky,1,n/a,n/a,skylight
+CC0464,237.8108,-2.43874,sky,1,n/a,n/a,skylight
+CC0465,238.2277,-2.20355,sky,1,n/a,n/a,skylight with no visible tube
+CC0466,238.222,-2.20309,sky,1,n/a,n/a,skylight with no visible tube
+CC0467,232.8974,-2.57767,sky,2,n/a,n/a,pinhole skylight
+CC0468,232.8954,-2.24789,sky,3,n/a,n/a,pinhole skylight
+CC0469,232.9055,-2.24948,sky,2,n/a,n/a,pinhole skylight
+CC0470,232.9151,-2.24921,sky,3,n/a,n/a,pinhole skylight
+CC0471,232.9223,-2.25186,sky,3,n/a,n/a,pinhole skylight
+CC0472,232.9345,-2.25363,sky,2,n/a,n/a,pinhole skylight
+CC0473,232.9471,-2.26227,sky,3,n/a,n/a,pinhole skylight
+CC0474,232.9516,-2.28421,sky,3,n/a,n/a,pinhole skylight
+CC0475,232.9613,-2.28998,sky,2,n/a,n/a,pinhole skylight
+CC0476,242.3015,-17.15987,sky,1,n/a,n/a,skylight
+CC0477,242.3978,-17.60699,sky,2,n/a,n/a,pinhole skylight
+CC0478,241.9884,-17.6178,sky,2,n/a,n/a,skylight pair
+CC0479,241.9915,-17.61658,sky,2,n/a,n/a,skylight pair
+CC0480,241.8828,-2.27867,sky,0,n/a,n/a,Small fracture skylight
+CC0481,241.8877,-2.27881,sky,0,n/a,n/a,Large fracture skylight
+CC0482,241.9834,-2.27173,sky,0,n/a,n/a,Largest fracture skylight
+CC0483,241.8413,-1.87769,sky,3,n/a,n/a,Skylight candidate
+CC0484,241.8447,-1.88062,sky,3,n/a,n/a,Skylight candidate
+CC0485,242.8806,-2.53265,sky,2,n/a,n/a,Skylight candidate
+CC0486,242.068,-2.00012,sky,3,n/a,n/a,skylight
+CC0487,242.0803,-1.94751,sky,3,n/a,n/a,small puncture skylight candidate
+CC0488,235.1587,-1.00293,srp,3,n/a,n/a,Small rimless pit
+CC0489,241.9008,-12.57263,srp,2,n/a,n/a,Small rimless pit
+CC0490,242.2004,-13.72852,srp,2,n/a,n/a,Small rimless pit
+CC0491,241.4673,-13.4082,srp,3,n/a,n/a,Small rimless pit
+CC0492,242.0093,-14.47632,srp,1,n/a,n/a,Small rimless pit
+CC0493,241.9023,-17.32227,srp,3,n/a,n/a,Small rimless pit
+CC0494,241.8804,-17.55811,srp,3,n/a,n/a,Small rimless pit
+CC0495,240.7769,-11.95361,srp,1,n/a,n/a,small rimless pit -- largish?
+CC0496,147.3906,25.41483,srp,1,n/a,n/a,Elysium region
+CC0497,147.3779,25.40985,srp,1,n/a,n/a,Elysium region
+CC0498,141.8278,31.13029,srp,3,n/a,n/a,small candidates near uplift
+CC0499,142.216,32.4014,srp,2,n/a,n/a,dark rimless pit
+CC0500,142.3588,32.20986,srp,3,n/a,n/a,dark rimless pit
+CC0501,139.3516,26.97774,srp,1,n/a,n/a,small pit between troughs
+CC0502,145.1574,28.92876,srp,2,n/a,n/a,deep-looking 100-m rimless pit
+CC0503,144.9525,29.48875,srp,3,n/a,n/a,rimless pit in sinuous channel floor (fluvial?)
+CC0504,239.7528,-1.2148,srp,2,n/a,n/a,rimless pit
+CC0505,239.7125,-1.62982,srp,2,n/a,n/a,rimless pit
+CC0506,238.8347,-5.13017,srp,3,n/a,n/a,rimless pit
+CC0507,255.8157,16.17691,srp,2,n/a,n/a,60m rimless pit
+CC0508,247.3951,20.14613,srp,2,n/a,n/a,Small rimless pit
+CC0509,233.5626,-11.12969,srp,1,n/a,n/a,"deep rimless pit, possible sloped entrance"
+CC0510,234.6653,-14.08301,srp,0,n/a,n/a,small rimless pit off Arsia's southwest flank
+CC0511,237.6516,-21.80383,srp,2,n/a,n/a,pair of rimless pits at flow margin
+CC0512,237.6524,-21.80306,srp,2,n/a,n/a,pair of rimless pits at flow margin
+CC0513,245.8652,3.99805,srp,3,n/a,n/a,rimless pit - Pavonis north flank edge
+CC0514,248.1257,1.54126,srp,3,n/a,n/a,rimless pit near Pavonis summit
+CC0515,260.3692,11.27306,srp,3,n/a,n/a,50m Channel center smrp
+CC0516,254.5631,16.5162,srp,2,n/a,n/a,50 m Channel edge smrp
+CC0517,259.6278,13.79756,srp,2,n/a,n/a,110m Channel center
+CC0518,260.721,11.89553,srp,3,n/a,n/a,36m rimless pit in channel center
+CC0519,258.8959,13.68997,srp,3,n/a,n/a,Interesting trio
+CC0520,257.7098,17.45486,srp,2,n/a,n/a,Small rimless pit in field of secondaries
+CC0521,257.5148,16.91045,srp,2,n/a,n/a,60m Channel smrp
+CC0522,252.2213,19.5945,srp,2,n/a,n/a,45x60m srp at channel rim
+CC0523,252.2969,19.6115,srp,2,n/a,n/a,Candidates at channel/fracture intersection
+CC0524,257.7665,20.15543,srp,2,n/a,n/a,"Dark srp, impact? Albedo feature?"
+CC0525,257.9468,19.7855,srp,2,n/a,n/a,Craters cutting into inverted channelsrp
+CC0526,244.9589,17.14942,srp,3,n/a,n/a,Channel rim srp
+CC0527,246.312,12.88562,srp,3,n/a,n/a,small rimless pit
+CC0528,245.7545,11.83345,srp,1,n/a,n/a,60m rimless pit with dust bunny
+CC0529,245.8894,11.49842,srp,2,n/a,n/a,Feature on channel wall and floor
+CC0530,241.8588,22.79249,srp,3,n/a,n/a,small rimless pit
+CC0531,240.6138,1.12164,srp,2,n/a,n/a,Tube skylight maybe?
+CC0532,240.7183,1.0499,srp,1,n/a,n/a,70x100m small rimless pit in flood channel 32m deep
+CC0533,240.9464,-0.5468,srp,0,n/a,n/a,140m small rimless pit in channel
+CC0534,243.5831,10.32749,srp,3,n/a,n/a,Small rimless pit
+CC0535,243.9559,7.63903,srp,2,n/a,n/a,Small rimless pit
+CC0536,243.379,-6.71021,srp,2,n/a,n/a,"80m smrp, >30m deep"
+CC0537,243.2451,-4.50244,srp,2,n/a,n/a,small rimless pit trench 150x50m
+CC0538,243.6948,-5.64697,srp,2,n/a,n/a,typical smrp
+CC0539,246.1274,-2.75122,srp,3,n/a,n/a,Small rimless pit
+CC0540,246.1123,-2.74829,srp,3,n/a,n/a,Small rimless pit
+CC0541,240.7238,-1.87396,srp,3,n/a,n/a,small smrps at edge of small impact
+CC0542,246.9441,-3.0293,srp,2,n/a,n/a,Small rimless pit
+CC0543,246.7214,-1.24121,srp,3,n/a,n/a,small rimless pit at edge of larger pit
+CC0544,245.0508,0.97021,srp,2,n/a,n/a,"Pavonis flank, channel edge pit"
+CC0545,249.0584,-3.93115,srp,1,n/a,n/a,small rimless pit in flow
+CC0546,245.978,-5.5498,srp,2,n/a,n/a,Small rimless pit
+CC0547,245.4998,-7.70825,srp,3,n/a,n/a,Small rimless pit
+CC0548,250.6877,-3.58107,srp,2,n/a,n/a,Small rimless pit
+CC0549,250.6709,-2.03648,srp,2,n/a,n/a,Small rimless pit
+CC0550,250.7045,-2.04361,srp,2,n/a,n/a,Small rimless pit
+CC0551,250.8257,-2.67987,srp,1,n/a,n/a,Small rimless pit
+CC0552,250.8879,-2.84816,srp,2,n/a,n/a,Small rimless pit
+CC0553,245.3001,-6.15368,srp,3,n/a,n/a,small rimless pit or black surface spot
+CC0554,245.4536,-7.2819,srp,2,n/a,n/a,small rimless pit near channel cliff
+CC0555,245.448,-7.47129,srp,3,n/a,n/a,Small rimless pit
+CC0556,248.7815,-1.7361,srp,2,n/a,n/a,Small rimless pit
+CC0557,248.9782,-1.82726,srp,3,n/a,n/a,Small rimless pit
+CC0558,248.8744,-2.20827,srp,2,n/a,n/a,Small rimless pit
+CC0559,248.1675,-8.26559,srp,2,n/a,n/a,Small rimless pit
+CC0560,248.1963,-8.26001,srp,3,n/a,n/a,Small rimless pit
+CC0561,248.0353,-8.27131,srp,3,n/a,n/a,Small rimless pit
+CC0562,244.8913,-5.90737,srp,2,n/a,n/a,Small rimless pit
+CC0563,244.8377,-6.11237,srp,2,n/a,n/a,Small rimless pit
+CC0564,245.0967,-7.53894,srp,2,n/a,n/a,Small rimless pit
+CC0565,245.2103,-7.84471,srp,3,n/a,n/a,Small rimless pit
+CC0566,245.4315,-10.59271,srp,2,n/a,n/a,small rimless pit Irregular candidate
+CC0567,248.2022,-6.81642,srp,2,n/a,n/a,Small rimless pit
+CC0568,248.2287,-6.82804,srp,3,n/a,n/a,Small rimless pit
+CC0569,349.6734,31.04544,srp,3,n/a,n/a,Crater floor smrp
+CC0570,348.8869,29.24847,srp,2,n/a,n/a,small rimless pit w/ angel pattern or impact? vent?
+CC0571,349.1462,29.32395,srp,1,n/a,n/a,irregular small rimless pit causing strong windstreak
+CC0572,349.024,29.39133,srp,2,n/a,n/a,small rimless pit with bimodal albedo wind pattern
+CC0573,349.1188,33.85615,srp,2,n/a,n/a,pit as albedo source ~ interesting
+CC0574,248.6659,-2.30981,srp,3,n/a,n/a,small rimless pit in channel
+CC0575,248.657,-2.38062,srp,3,n/a,n/a,small rimless pit in channel
+CC0576,248.6593,-2.39136,srp,3,n/a,n/a,small rimless pit in channel
+CC0577,248.7123,-2.35413,srp,2,n/a,n/a,small rimless pit in channel
+CC0578,248.7363,-2.05652,srp,2,n/a,n/a,small rimless pit in channel
+CC0579,248.7422,-2.04297,srp,3,n/a,n/a,small rimless pit in channel
+CC0580,248.8772,-1.73401,srp,2,n/a,n/a,small rimless pit in channel
+CC0581,248.8813,-2.02808,srp,3,n/a,n/a,small rimless pit in channel
+CC0582,249.1404,-3.39053,srp,3,n/a,n/a,small rimless pit or partially buried impact
+CC0583,242.1816,-2.65948,srp,3,n/a,n/a,Collapse pit
+CC0584,242.2307,-2.72461,srp,2,n/a,n/a,Collapse pit at flow margin
+CC0585,242.2062,-3.19299,srp,1,n/a,n/a,small rimless pit and bright albedo
+CC0586,246.9757,-2.87891,srp,3,n/a,n/a,Small rimless pit
+CC0587,250.4474,-3.65747,srp,2,n/a,n/a,Small rimless pit
+CC0588,243.957,-5.85095,srp,3,n/a,n/a,Small rimless pit
+CC0589,244.2734,-7.05786,srp,3,n/a,n/a,Small rimless pit
+CC0590,250.7959,-2.44019,srp,3,n/a,n/a,small rimless pit in channel
+CC0591,250.9875,-2.27551,srp,3,n/a,n/a,small rimless pit in channel
+CC0592,249.8602,0.67963,srp,2,n/a,n/a,Small rimless pit
+CC0593,249.883,0.69531,srp,3,n/a,n/a,Small rimless pit
+CC0594,258.7858,11.03629,srp,3,n/a,n/a,Channel pit
+CC0595,260.3762,11.17712,srp,3,n/a,n/a,Channel pit
+CC0596,258.8535,6.12646,srp,3,n/a,n/a,Channel pit
+CC0597,259.1701,9.38116,srp,3,n/a,n/a,Small rimless pit
+CC0598,256.3906,2.79248,srp,2,n/a,n/a,black spot - srp or albedo feature?
+CC0599,256.8506,5.48022,srp,3,n/a,n/a,Small rimless pit
+CC0600,251.0144,5.51978,srp,3,n/a,n/a,small rimless pit or impact spot?
+CC0601,257.9387,-1.57751,srp,2,n/a,n/a,black hole in sun-facing wall - impact?
+CC0602,255.6499,5.50757,srp,2,n/a,n/a,round black smrp
+CC0603,258.1742,-0.41638,srp,3,n/a,n/a,Small rimless pit
+CC0604,259.5043,5.30017,srp,3,n/a,n/a,dark spot / pit at flow margin
+CC0605,257.8783,0.45557,srp,3,n/a,n/a,Small rimless pit
+CC0606,258.148,9.15649,srp,3,n/a,n/a,Small rimless pit
+CC0607,258.1926,9.21216,srp,3,n/a,n/a,smrps in channel near margin of a thick flow
+CC0608,258.192,9.21026,srp,3,n/a,n/a,smrps in channel near margin of a thick flow
+CC0609,252.1155,4.28882,srp,3,n/a,n/a,Pinhole in open plain ~ possible impact spot
+CC0610,260.5335,1.82349,srp,3,n/a,n/a,Pinhole in mid flow ~ possible impact spot
+CC0611,251.3599,5.28027,srp,3,n/a,n/a,Small pinhole with wind streak - impact?
+CC0612,258.3162,0.40686,srp,3,n/a,n/a,Small rimless pit
+CC0613,258.3176,0.38208,srp,3,n/a,n/a,Small rimless pit
+CC0614,257.2849,8.40088,srp,3,n/a,n/a,Small rimless pit
+CC0615,257.4323,7.30457,srp,2,n/a,n/a,small rimless pit with albedo tail at cliff edge
+CC0616,257.0975,5.81226,srp,3,n/a,n/a,channel floor smrp
+CC0617,258.5443,6.75,srp,2,n/a,n/a,small rimless pit at edge of buried ridge in flow
+CC0618,252.6262,7.51971,srp,3,n/a,n/a,irregular smrp
+CC0619,256.087,11.35876,srp,2,n/a,n/a,Channel edge smrp
+CC0620,256.0772,11.14542,srp,0,n/a,n/a,Dark collapse pit at edge of graben
+CC0621,252.7878,1.72705,srp,3,n/a,n/a,Small black spot
+CC0622,252.211,-2.67542,srp,3,n/a,n/a,Smrp
+CC0623,259.3284,9.53174,srp,3,n/a,n/a,Irregular smrp
+CC0624,259.2742,12.29077,srp,3,n/a,n/a,small rimless pit or black surface spot?
+CC0625,257.6903,8.66577,srp,3,n/a,n/a,black spot pair - impa ct or smrp?
+CC0626,257.7222,9.11377,srp,3,n/a,n/a,Dark smrp
+CC0627,256.0505,7.04443,srp,3,n/a,n/a,small rimless pit at flow margin
+CC0628,256.2076,8.73166,srp,3,n/a,n/a,Smrp
+CC0629,256.2305,8.66154,srp,3,n/a,n/a,Smrp
+CC0630,231.6929,-0.953,srp,3,n/a,n/a,small rimless pit pair or double impact w/ septum?
+CC0631,236.2512,0.39429,srp,2,n/a,n/a,Pair of channel smrps
+CC0632,236.2505,0.39722,srp,3,n/a,n/a,Pair of channel smrps
+CC0633,236.1467,0.43213,srp,2,n/a,n/a,Channel small rimless pit
+CC0634,235.9144,0.45984,srp,3,n/a,n/a,Channel smrp
+CC0635,235.907,0.72607,srp,3,n/a,n/a,Smrp
+CC0636,236.5721,-0.43701,srp,3,n/a,n/a,Small rimless pit
+CC0637,236.6636,-1.55133,srp,2,n/a,n/a,Small rimless pit
+CC0638,236.802,-1.64185,srp,3,n/a,n/a,Small rimless pit
+CC0639,236.8337,-1.66174,srp,2,n/a,n/a,Small rimless pit
+CC0640,236.8418,-1.66248,srp,3,n/a,n/a,Small rimless pit
+CC0641,236.8503,-1.66728,srp,3,n/a,n/a,Small rimless pit
+CC0642,239.285,5.93365,srp,3,n/a,n/a,channel
+CC0643,234.1543,0.17676,srp,1,n/a,n/a,Small rimless pit
+CC0644,234.1196,-0.62549,srp,3,n/a,n/a,Small rimless pit
+CC0645,234.3263,-1.0661,srp,3,n/a,n/a,Small rimless pit
+CC0646,234.3256,-1.05035,srp,3,n/a,n/a,Small rimless pit
+CC0647,234.3243,-1.04108,srp,3,n/a,n/a,Small rimless pit
+CC0648,235.085,-9.32257,srp,1,n/a,n/a,Small rimless pit
+CC0649,235.075,-9.3367,srp,3,n/a,n/a,Small rimless pit
+CC0650,234.4096,-6.58109,srp,1,n/a,n/a,nice one on mesa
+CC0651,244.2306,-13.67106,srp,3,n/a,n/a,pretty good smrp
+CC0652,250.113,-12.60106,srp,1,n/a,n/a,graben wall smrp
+CC0653,244.5035,-6.8344,srp,3,n/a,n/a,Small rimless pit
+CC0654,243.5758,-16.0476,srp,2,n/a,n/a,Small rimless pit
+CC0655,241.1322,-15.86448,srp,2,n/a,n/a,Small rimless pit
+CC0656,241.2457,-16.9422,srp,3,n/a,n/a,Small rimless pit
+CC0657,242.6888,-20.69154,srp,2,n/a,n/a,Small rimless pit
+CC0658,242.6024,-19.84993,srp,3,n/a,n/a,Small rimless pit
+CC0659,242.5575,-19.54928,srp,3,n/a,n/a,Small rimless pit
+CC0660,242.5484,-19.59533,srp,2,n/a,n/a,Small rimless pit
+CC0661,243.0055,-15.22204,srp,3,n/a,n/a,Small rimless pit
+CC0662,243.1498,-15.76502,srp,2,n/a,n/a,Small rimless pit
+CC0663,243.2182,-16.96885,srp,3,n/a,n/a,Small rimless pit
+CC0664,243.5661,-16.81019,srp,3,n/a,n/a,Small rimless pit
+CC0665,243.3999,-16.70497,srp,2,n/a,n/a,Small rimless pit
+CC0666,242.9639,-12.69608,srp,2,n/a,n/a,flow edge
+CC0667,243.728,-15.67358,srp,2,n/a,n/a,Small rimless pit
+CC0668,244.3635,-19.46603,srp,2,n/a,n/a,Small rimless pit
+CC0669,244.2121,-18.00473,srp,2,n/a,n/a,Small rimless pit
+CC0670,241.2489,-13.89941,srp,2,n/a,n/a,Small rimless pit
+CC0671,241.2311,-13.91565,srp,3,n/a,n/a,Small rimless pit
+CC0672,241.3225,-13.9895,srp,2,n/a,n/a,Small rimless pit
+CC0673,241.2091,-14.0835,srp,2,n/a,n/a,Small rimless pit
+CC0674,241.4197,-14.49976,srp,2,n/a,n/a,Small rimless pit
+CC0675,241.4138,-14.6001,srp,2,n/a,n/a,Small rimless pit
+CC0676,241.5523,-14.85986,srp,2,n/a,n/a,Small rimless pit
+CC0677,241.4502,-14.37183,srp,1,n/a,n/a,Small rimless pit
+CC0678,241.5787,-13.87384,srp,3,n/a,n/a,Small rimless pit
+CC0679,241.5762,-13.75732,srp,3,n/a,n/a,Small rimless pit
+CC0680,241.438,-13.40186,srp,2,n/a,n/a,Small rimless pit
+CC0681,242.0333,-17.71973,srp,2,n/a,n/a,Small rimless pit
+CC0682,241.9929,-17.63374,srp,2,n/a,n/a,Small rimless pit
+CC0683,242.0565,-1.9762,srp,3,n/a,n/a,Small rimless pit
+CC0684,258.8904,13.68774,srp,3,n/a,n/a,Interesting trio
+CC0685,258.8989,13.68127,srp,3,n/a,n/a,Interesting trio
+CC0686,285.1428,15.15173,srp,2,n/a,n/a,Kasei Flow candidate i=60 smrp
+CC0687,302.5948,26.56631,srp,3,n/a,n/a,Kasei collapse region i=40-smrp
+CC0688,302.3751,26.48032,srp,3,n/a,n/a,Kasei collapse region i=40 - smrp
+CC0689,303.0538,27.46716,srp,3,n/a,n/a,Kasei collapse region i=42
+CC0690,302.836,27.48206,srp,2,n/a,n/a,Kasei collapse region i=46
+CC0691,302.8612,27.46469,srp,3,n/a,n/a,Kasei collapse region i=46
+CC0692,302.843,27.41193,srp,3,n/a,n/a,Kasei collapse region i=46
+CC0693,302.8429,27.40613,srp,3,n/a,n/a,Kasei collapse region i=46
+CC0694,302.9058,27.87286,srp,3,n/a,n/a,Kasei collapse region i=46
+CC0695,277.0374,15.47429,srp,0,n/a,n/a,E. of Tharsis Tholus - smrp
+CC0696,296.7792,31.73878,srp,2,n/a,n/a,Kasei SMRP
+CC0697,243.0488,-10.04382,rim,3,n/a,n/a,sun-facing rim wall shadows
+CC0698,238.6445,-2.66437,sky,2,n/a,n/a,tube skylight
+CC0699,231.4626,-1.08371,sky,3,n/a,n/a,skylight or srp
+CC0700,238.134,-19.00732,srp,2,n/a,n/a,Small rimless pit
+CC0701,234.7688,-13.04126,pit,2,n/a,n/a,cave candidate in rift zone
+CC0702,237.9579,-14.74115,flr,2,n/a,n/a,Deep pit in fracture/graben
+CC0703,349.0924,27.47949,srp,2,n/a,n/a,small rimless pit with albedo pattern
+CC0704,258.3652,0.44067,rim,2,n/a,n/a,small rimless pit trio near ridge
+CC0705,256.1077,4.21289,srp,3,n/a,n/a,small rimless pit - possible vent
+CC0706,236.9214,0.90698,sky,2,n/a,n/a,skylight
+CC0707,236.73,-13.51,end,1,n/a,n/a,End-of-channel. Possibly in continuous fracture or conduit.
+CC0708,239.9335,-11.57103,irr,0,n/a,n/a,"irr - Deep, irregularly shaped pit at end of sinuous channel."
+CC0709,240.5046,-3.43583,flr,1,n/a,n/a,flr - Dark hole in floor of faint curvilinear channel.
+CC0710,239.9335,-12.40195,srp,3,n/a,n/a,small rimless pit
+CC0711,242.186,-2.64802,irr,2,n/a,n/a,Small irregular pit in lava flow.
+CC0712,161.0971,9.62994,crk,0,n/a,n/a,"Channel rim, floor, fracture"
+CC0713,161.1316,9.61115,lat,0,n/a,n/a,Large lateral overhang
+CC0714,161.0959,9.63191,crk,0,n/a,n/a,fracture candidate
+CC0715,161.095,9.63325,crk,0,n/a,n/a,zone of intersecting fractures at cliff
+CC0716,161.1048,9.65024,lat,0,n/a,n/a,cliff wall fracture intersect
+CC0717,161.1371,9.64589,crk,0,n/a,n/a,cliff wall fracture intersect
+CC0718,161.1275,9.64604,lat,0,n/a,n/a,cliff wall fracture intersect
+CC0719,161.123,9.64627,crk,0,n/a,n/a,cliff wall fracture intersect with rope?
+CC0720,161.1214,9.64627,crk,0,n/a,n/a,cliff wall fracture intersect
+CC0721,161.124,9.64124,crk,0,n/a,n/a,cliff wall fracture intersect
+CC0722,161.12,9.61913,lat,0,n/a,n/a,cliff wall fracture intersect
+CC0723,161.1192,9.6189,lat,0,n/a,n/a,cliff wall fracture intersect
+CC0724,161.117,9.61935,lat,0,n/a,n/a,cliff wall fracture intersect
+CC0725,161.1184,9.6161,lat,0,n/a,n/a,Cliff wall lateral tube candidate
+CC0726,161.0885,9.60543,crk,0,n/a,n/a,cliff wall fracture intersect
+CC0727,276.3057,44.09782,lat,0,n/a,n/a,Cliff wall lateral tube candidate
+CC0728,161.5987,7.21164,crk,0,n/a,n/a,channel rim fracture
+CC0729,161.5894,7.21852,sky,0,n/a,n/a,possible bridge over channel
+CC0730,161.5701,7.23542,lat,0,n/a,n/a,cliff wall fracture intersect
+CC0731,161.5542,7.24314,crk,0,n/a,n/a,small cliff rim fracture
+CC0732,161.5248,7.27509,lat,0,n/a,n/a,Rim overhang lateral candidate
+CC0733,161.5213,7.27475,lat,0,n/a,n/a,Rim overhang lateral candidate
+CC0734,238.3173,-13.63231,irr,0,n/a,n/a,Small possible incipient Type I APC - 5 m
+CC0735,253.9207,33.69458,flr,0,n/a,n/a,Small collapse trough in channel floor
+CC0736,253.9255,33.69666,flr,0,n/a,n/a,100 m collapse trough in channel floor
+CC0737,249.7785,-12.26022,irr,0,n/a,n/a,Solution cave? Cliff hole
+CC0738,250.8181,26.01904,pin,2,n/a,n/a,Channel rim pinhole pair
+CC0739,250.8219,26.01901,pin,2,n/a,n/a,Channel rim pinhole pair
+CC0740,248.9988,22.25006,end,2,n/a,n/a,Possible channel end overhang - Vent? - Lathrop contrib
+CC0741,248.9631,22.25146,end,3,n/a,n/a,Possible channel end overhang - Vent? - Lathrop contrib
+CC0742,226.5841,17.7379,lat,0,n/a,n/a,Good lateral candidate in Olympus Mons caldera rim
+CC0743,234.4479,0.46576,pin,1,n/a,n/a,channel pinhole
+CC0744,234.4674,0.44656,sky,1,n/a,n/a,Channel skylight
+CC0745,234.4404,0.49802,sky,2,n/a,n/a,Channel skylight
+CC0746,234.4601,0.01733,srp,2,n/a,n/a,irregular smrp
+CC0747,234.4813,-0.03186,srp,2,n/a,n/a,irregular smrp
+CC0748,234.4653,-0.026,pin,2,n/a,n/a,pinhole
+CC0749,234.8233,-2.56354,sky,2,n/a,n/a,tube skylight
+CC0750,234.8219,-2.55637,sky,3,n/a,n/a,tube skylight
+CC0751,234.8161,-2.54276,sky,2,n/a,n/a,tube skylight
+CC0752,234.8063,-2.53027,sky,2,n/a,n/a,tube skylight
+CC0753,234.7696,-2.49557,sky,1,n/a,n/a,"channel tube intersection, bridge?"
+CC0754,234.7678,-2.49548,sky,1,n/a,n/a,"channel tube intersection, bridge?"
+CC0755,234.6606,-2.41479,sky,2,n/a,n/a,tube skylight
+CC0756,234.6544,-2.41092,sky,3,n/a,n/a,tube skylight
+CC0757,234.641,-2.39467,sky,2,n/a,n/a,tube skylight
+CC0758,234.6367,-2.39032,sky,2,n/a,n/a,tube skylight
+CC0759,234.7866,-2.34351,sky,2,n/a,n/a,irregular tube skylight?
+CC0760,234.7692,-1.80074,sky,2,n/a,n/a,tube skylight
+CC0761,234.5344,-1.61975,srp,3,n/a,n/a,smrp in faint channel
+CC0762,234.7177,-1.13182,sky,2,n/a,n/a,tube skylight
+CC0763,234.2727,-2.10828,sky,2,n/a,n/a,tube skylight
+CC0764,234.1722,-3.09729,sky,3,n/a,n/a,tube skylight
+CC0765,234.1466,-3.10413,sky,3,n/a,n/a,tube skylight
+CC0766,234.2607,-3.10699,sky,3,n/a,n/a,tube skylight
+CC0767,234.0517,-3.06207,sky,3,n/a,n/a,tube skylight
+CC0768,233.9712,-3.04944,sky,3,n/a,n/a,tube skylight
+CC0769,234.1501,-3.02374,sky,3,n/a,n/a,tube skylight
+CC0770,234.1394,-3.01685,sky,3,n/a,n/a,tube skylight
+CC0771,234.1306,-3.01141,sky,3,n/a,n/a,tube skylight
+CC0772,234.1171,-2.95563,sky,3,n/a,n/a,tube skylight
+CC0773,234.1235,-2.95819,sky,3,n/a,n/a,tube skylight
+CC0774,236.1148,-3.14771,sky,0,n/a,n/a,tube skylight
+CC0775,236.0798,-3.08081,sky,0,n/a,n/a,tube skylight
+CC0776,236.0749,-3.0733,sky,0,n/a,n/a,tube skylight
+CC0777,236.0728,-3.0528,sky,0,n/a,n/a,tube skylight
+CC0778,236.0729,-3.04926,sky,0,n/a,n/a,tube skylight
+CC0779,236.0719,-3.04401,sky,0,n/a,n/a,tube skylight
+CC0780,236.0627,-3.00909,sky,0,n/a,n/a,tube skylight
+CC0781,236.0446,-2.99792,sky,0,n/a,n/a,tube skylight
+CC0782,236.04,-2.99756,sky,0,n/a,n/a,tube skylight
+CC0783,236.0365,-2.99695,sky,0,n/a,n/a,tube skylight
+CC0784,236.0146,-2.93555,sky,0,n/a,n/a,tube skylight
+CC0785,235.9832,-2.91675,sky,0,n/a,n/a,tube skylight
+CC0786,235.9755,-2.91278,sky,0,n/a,n/a,tube skylight
+CC0787,235.9736,-2.89459,sky,0,n/a,n/a,tube skylight
+CC0788,235.9763,-2.88922,sky,0,n/a,n/a,tube skylight
+CC0789,235.9979,-2.85663,sky,0,n/a,n/a,tube skylight
+CC0790,235.968,-2.86755,sky,0,n/a,n/a,tube skylight
+CC0791,235.9623,-2.85175,sky,0,n/a,n/a,tube skylight
+CC0792,235.9459,-2.83087,sky,0,n/a,n/a,tube skylight
+CC0793,235.9332,-2.82233,sky,1,n/a,n/a,tube skylight
+CC0794,236.1744,-3.21838,sky,1,n/a,n/a,tube skylight
+CC0795,236.1613,-3.2041,sky,1,n/a,n/a,tube skylight
+CC0796,236.1519,-3.1969,sky,1,n/a,n/a,tube skylight
+CC0797,236.1465,-3.18884,sky,1,n/a,n/a,tube skylight
+CC0798,236.1458,-3.18738,sky,1,n/a,n/a,tube skylight
+CC0799,236.1454,-3.18506,sky,1,n/a,n/a,tube skylight
+CC0800,236.1448,-3.18359,sky,1,n/a,n/a,tube skylight
+CC0801,236.1339,-3.16638,sky,1,n/a,n/a,tube skylight
+CC0802,236.1231,-3.15637,sky,1,n/a,n/a,tube skylight
+CC0803,302.5291,28.40052,crk,0,n/a,n/a,Kasei fracture in collapse pit floor
+CC0804,239.5204,-11.74243,sky,0,n/a,n/a,small 30m skylight in old pit chain
+CC0805,239.0983,-11.34962,sky,0,n/a,n/a,small skylight
+CC0806,239.1036,-11.3175,sky,0,n/a,n/a,small skylight
+CC0807,257.5424,35.07336,crk,0,n/a,n/a,Excellent fracture cave
+CC0808,68.1136,23.84433,kst,0,n/a,n/a,Karst in crater floor fill
+CC0809,138.3816,85.05039,pol,0,n/a,n/a,Candidate in polar pit
+CC0810,238.3593,-6.60093,rim,3,n/a,n/a,Crater rim candidate on Arsia flank
+CC0811,238.1289,-6.27506,sky,3,n/a,n/a,skylight
+CC0812,238.1584,-6.30591,pin,3,n/a,n/a,pinhole
+CC0813,238.1435,-6.28731,pit,3,n/a,n/a,pit
+CC0814,238.2185,-6.34703,pit,3,n/a,n/a,pit
+CC0815,238.2038,-6.40833,pit,2,n/a,n/a,pit
+CC0816,138.4225,85.04821,pol,0,n/a,n/a,Fracture candidate near polar pit
+CC0817,239.29,-10.80859,srp,0,n/a,n/a,Small rimless pit
+CC0818,239.3658,-10.50217,srp,3,n/a,n/a,small rimless pit near Arsia rim
+CC0819,135.3043,84.40593,pol,0,n/a,n/a,Long chain of polar pits
+CC0820,134.9599,84.40979,pol,0,n/a,n/a,Long chain of polar pits
+CC0821,134.451,84.42443,pol,0,n/a,n/a,Long chain of polar pits
+CC0822,296.6958,30.78402,pit,3,n/a,n/a,Kasei small vent candidate
+CC0823,239.3203,33.81435,crk,0,n/a,n/a,Small fracture caved near large collapse pits
+CC0824,239.2624,33.76903,crk,0,n/a,n/a,Small fracture caved near large collapse pits
+CC0825,239.0115,34.52517,crk,0,n/a,n/a,Small fracture caved near large collapse pits
+CC0826,239.065,34.42044,crk,0,n/a,n/a,Small fracture caved near large collapse pits
+CC0827,239.0738,34.3965,crk,0,n/a,n/a,Small fracture caved near large collapse pits
+CC0828,241.7077,36.08857,crk,0,n/a,n/a,Small fracture caved near large collapse pits
+CC0829,240.0038,35.24773,crk,0,n/a,n/a,Small fracture caved near large collapse pits
+CC0830,25.6893,44.16867,kst,0,n/a,n/a,Deuteronilus karst region
+CC0831,253.5629,33.23537,crk,0,n/a,n/a,Small Ceraunius fracture pit
+CC0832,155.0078,11.40808,lat,0,n/a,n/a,Lateral fracture candidate in Cerberus Fossae
+CC0833,2.0564,38.91819,crk,0,n/a,n/a,Dark fractures in Arabia Terra crater
+CC0834,2.0691,38.91393,crk,0,n/a,n/a,Dark fractures in Arabia Terra crater
+CC0835,2.0023,38.84796,crk,0,n/a,n/a,Dark fractures in Arabia Terra crater
+CC0836,2.0021,38.84662,crk,0,n/a,n/a,Dark fractures in Arabia Terra crater
+CC0837,2.0056,38.83753,crk,0,n/a,n/a,Dark fractures in Arabia Terra crater
+CC0838,2.006,38.83727,crk,0,n/a,n/a,Dark fractures in Arabia Terra crater
+CC0839,2.0489,38.78035,crk,0,n/a,n/a,Dark fractures in Arabia Terra crater
+CC0840,2.049,38.78108,crk,0,n/a,n/a,Dark fractures in Arabia Terra crater
+CC0841,2.0472,38.78135,crk,0,n/a,n/a,Dark fractures in Arabia Terra crater
+CC0842,2.0487,38.77901,crk,0,n/a,n/a,Dark fractures in Arabia Terra crater
+CC0843,249.4994,23.26966,lat,0,n/a,n/a,Pit wall lateral candidate near Olympica Fossae
+CC0844,249.4981,23.26611,lat,0,n/a,n/a,Pit wall lateral candidate near Olympica Fossae
+CC0845,253.0579,34.05775,pit,0,n/a,n/a,Ceraunius Fossae small candidate - 5 m
+CC0846,250.8204,28.02429,lat,0,n/a,n/a,Pit wall candidate in Ceraunius Fossae -see stretch
+CC0847,250.8189,28.02674,lat,0,n/a,n/a,Pit wall candidate in Ceraunius Fossae -see stretch
+CC0848,179.208,2.19145,crk,0,n/a,n/a,Eastern Elysium cliff undercuts - see stretch
+CC0849,179.2074,2.21387,crk,0,n/a,n/a,Eastern Elysium cliff undercuts - see stretch
+CC0850,179.2093,2.20722,crk,0,n/a,n/a,Eastern Elysium cliff undercuts - see stretch
+CC0851,25.8102,44.18225,kst,0,n/a,n/a,Deuteronilus karst region
+CC0852,25.8022,44.06839,kst,0,n/a,n/a,Deuteronilus karst region
+CC0853,25.79,44.06598,kst,0,n/a,n/a,Deuteronilus karst region
+CC0854,25.8055,44.15863,kst,0,n/a,n/a,Deuteronilus karst region
+CC0855,25.8042,44.16736,kst,0,n/a,n/a,Deuteronilus karst region
+CC0856,280.1141,15.19167,flr,1,n/a,n/a,Excellent fracture pit at edge of channel floor
+CC0857,231.2344,14.71704,end,3,n/a,n/a,End of trough overhang
+CC0858,231.2769,14.71167,end,3,n/a,n/a,End of trough overhang
+CC0859,231.4663,14.66089,lat,3,n/a,n/a,Trough channel intersect
+CC0860,240.4131,46.41468,lat,0,n/a,n/a,small channel wall lateral 6m
+CC0861,240.4133,46.41562,lat,0,n/a,n/a,small channel wall lateral 3m
+CC0862,289.3796,38.1994,rim,0,n/a,n/a,Good fracture edge collapse candidate
+CC0863,289.3419,38.19513,pit,0,n/a,n/a,Deep dark small pit
+CC0864,289.4199,38.11223,rim,0,n/a,n/a,Excellent fracture edge collapse candidate
+CC0865,289.3141,38.11926,pit,0,n/a,n/a,Deep dark small pit
+CC0866,289.3122,38.13011,crk,0,n/a,n/a,"Deep dark  small crack, see stretch"
+CC0867,289.3159,38.09998,flr,0,n/a,n/a,Pit in pit floor with overhang
+CC0868,289.417,37.94659,flr,0,n/a,n/a,Small channel floor candidate
+CC0869,289.3145,38.24622,pit,0,n/a,n/a,Interesting pit - almost looks excavated
+CC0870,188.1337,24.48309,irr,0,n/a,n/a,Tartaru s Colles natural bridge
+CC0871,164.2091,8.53809,crk,0,n/a,n/a,Cerberus fissure fracture
+CC0872,164.2006,8.54608,crk,0,n/a,n/a,Cerberus fissure fracture
+CC0873,164.1979,8.5459,crk,0,n/a,n/a,Cerberus fissure fracture
+CC0874,164.1819,8.54462,crk,0,n/a,n/a,Cerberus fissure fracture
+CC0875,164.1334,8.51968,crk,0,n/a,n/a,Cerberus fissure fracture
+CC0876,164.1473,8.50168,crk,0,n/a,n/a,Cerberus fissure fracture
+CC0877,164.1464,8.50073,crk,0,n/a,n/a,Cerberus fissure fracture
+CC0878,164.1513,8.49454,crk,0,n/a,n/a,Cerberus fissure fracture
+CC0879,164.1539,8.49268,crk,0,n/a,n/a,Cerberus fissure fracture
+CC0880,164.1581,8.48889,crk,0,n/a,n/a,Cerberus fissure fracture
+CC0881,164.1669,8.49161,crk,0,n/a,n/a,Cerberus fissure fracture
+CC0882,164.1731,8.47955,crk,0,n/a,n/a,Cerberus fissure fracture
+CC0883,164.1914,8.47311,crk,0,n/a,n/a,Cerberus fissure fracture
+CC0884,188.5147,24.59647,irr,0,n/a,n/a,Tartarus Rootless cone candidate
+CC0885,188.5166,24.59772,irr,0,n/a,n/a,Tartarus Rootless cone candidate
+CC0886,188.5445,24.58688,irr,0,n/a,n/a,Tartarus Rootless cone candidate
+CC0887,188.5451,24.5863,irr,0,n/a,n/a,Tartarus Rootless cone candidate
+CC0888,188.5604,24.58463,irr,0,n/a,n/a,Tartarus Rootless cone candidate
+CC0889,170.7812,6.93188,crk,0,n/a,n/a,Cerberus fissure fracture
+CC0890,170.8085,6.93152,crk,0,n/a,n/a,Cerberus fissure fracture
+CC0891,246.9805,27.64392,pit,0,n/a,n/a,Tharsis vent candidate
+CC0892,246.9785,27.64278,pit,0,n/a,n/a,Tharsis vent candidate
+CC0893,143.279,-71.885,pol,0,n/a,n/a,South polar rim pit
+CC0894,143.3601,-71.91489,pol,0,n/a,n/a,South polar fracture pit
+CC0895,143.2192,-71.878,pol,0,n/a,n/a,South polar rim pit
+CC0896,235.5147,-24.68652,crk,1,n/a,n/a,Daedalia collapse pit in long fracuture lat=-24
+CC0897,67.0433,28.17861,irr,0,n/a,n/a,Collapse pit/vent at top of mound - Huo Hsing Vallis
+CC0898,67.099,28.03603,crk,0,n/a,n/a,Huo Hsing vallis - cliff wall fractures
+CC0899,232.8965,0.37598,sky,0,n/a,n/a,Cave / natural bridge near Biblis Patera
+CC0900,232.8984,0.37378,sky,0,n/a,n/a,Cave / natural bridge near Biblis Patera
+CC0901,39.1812,26.27903,pit,0,n/a,n/a,Candidate region for sublimation caves in past or present ice flows
+CC0902,237.4089,-10.15649,pit,3,n/a,n/a,Arisa flank
+CC0903,175.4827,-0.66299,smrp,2,n/a,n/a,"small 40m smrp with, dark albedo, i=55 in Appolinaris"
+CC0904,175.1679,-0.61224,crk,2,n/a,n/a,pit  in Appolinaris
+CC0905,172.9255,-1.67143,crk,1,n/a,n/a,fracture pit in Appolinaris fractures Sun-facing trough rim candidate
+CC0906,172.9309,-1.68074,crk,2,n/a,n/a,fracture pit in Appolinaris Sun-facing trough rim candidate
+CC0907,172.9315,-1.6499,crk,2,n/a,n/a,fracture pit in Appolinaris Sun-facing trough rim candidate
+CC0908,172.9587,-1.67847,crk,3,n/a,n/a,fracture pit in Appolinaris Sun-facing trough rim candidate
+CC0909,172.8273,-1.71619,crk,2,n/a,n/a,fracture pit in Appolinaris Sun-facing trough rim candidate
+CC0910,172.8263,-1.7123,crk,2,n/a,n/a,fracture pit in Appolinaris Sun-facing trough rim candidate
+CC0911,172.8236,-1.71724,crk,3,n/a,n/a,fracture pit in Appolinaris Sun-facing trough rim candidate
+CC0912,172.8796,-1.70386,irr,2,n/a,n/a,sun-facing shadow in crater rim -- darkest at i=35
+CC0913,172.8247,-1.09106,crk,2,n/a,n/a,sun-facing shadows - fracture at fracture edge
+CC0914,172.8258,-1.08983,crk,2,n/a,n/a,sun-facing shadows - fracture at fracture edge
+CC0915,172.8266,-1.08818,crk,2,n/a,n/a,sun-facing shadows - fracture at fracture edge
+CC0916,172.796,-1.07492,flr,1,n/a,n/a,Candidate in fracture network cascade face
+CC0917,172.6572,0.48055,rim,2,n/a,n/a,Very dark spot in crater rim
+CC0918,177.9824,1.91823,flr,2,n/a,n/a,Pit in fracture floor
+CC0919,161.1046,9.65044,crk,0,n/a,n/a,Cerberus fractures in HiRISE
+CC0920,161.0971,9.63013,crk,0,n/a,n/a,Cerberus fractures in HiRISE
+CC0921,161.0663,9.6485,crk,0,n/a,n/a,Cerberus fractures in HiRISE
+CC0922,161.1185,9.64691,crk,0,n/a,n/a,Cerberus fractures in HiRISE
+CC0923,161.1217,9.64615,crk,0,n/a,n/a,Cerberus fractures in HiRISE
+CC0924,161.1229,9.64621,crk,0,n/a,n/a,Cerberus fractures in HiRISE
+CC0925,161.1371,9.6456,crk,0,n/a,n/a,Cerberus fractures in HiRISE
+CC0926,161.1272,9.64587,crk,0,n/a,n/a,Cerberus fractures in HiRISE
+CC0927,141.3146,30.56317,irr,0,n/a,n/a,Irregular surface hole
+CC0928,141.3121,30.5874,crk,0,n/a,n/a,Small ambiguous hole in fracture
+CC0929,242.9741,-0.26598,sky,1,n/a,n/a,"pair of 60-m pits in flow, 1km apart"
+CC0930,242.9604,-0.27606,sky,1,n/a,n/a,"pair of 60-m pits in flow, 1km apart"

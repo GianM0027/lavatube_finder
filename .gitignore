@@ -2,4 +2,4 @@ papers
 .venv
 .idea
 .env
-data
+data/mars_relief_cache.nc
