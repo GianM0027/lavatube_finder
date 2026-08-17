@@ -2,4 +2,8 @@ papers
 .venv
 .idea
 .env
-data/mars_relief_cache.nc
+lavatube_finder.ipynb
+data
+data/mars_relief_cache_region.json
+to-do
+trade_off.py

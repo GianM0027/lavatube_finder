@@ -41,3 +41,37 @@ def get_mars_elevation(lat, lon, resolution="01m"):
 
     elevations = track["elevation_m"].tolist()
     return elevations[0] if len(elevations) == 1 else elevations
+
+
+def is_point_in_region(lat, lon, region_coordinates):
+    """
+    Checks if a given (latitude, longitude) coordinate is inside a defined region.
+
+    :param lat: Float, latitude of the target point.
+    :param lon: Float, longitude of the target point.
+    :param region_coordinates: List of 4 coordinate pairs defining the region.
+    :return: Boolean, True if the point is within the region, False otherwise.
+    """
+    # 1. Extract latitude bounds
+    lats = [pt[0] for pt in region_coordinates]
+    min_lat, max_lat = min(lats), max(lats)
+
+    # Check if latitude is out of bounds
+    if not (min_lat <= lat <= max_lat):
+        return False
+
+    # 2. Extract longitude boundaries based on the polygon's top edge
+    # Assumes point 1 is [lat_max, lon_start] and point 2 is [lat_max, lon_end]
+    lon_start = region_coordinates[0][1] % 360
+    lon_end = region_coordinates[1][1] % 360
+
+    # Normalize the target longitude to the 0-360 range
+    lon_norm = lon % 360
+
+    # 3. Check longitude boundary (accounting for wrap-around)
+    if lon_start <= lon_end:
+        # Standard case (e.g., Arcadia Planitia: 165.9 to 210.4)
+        return lon_start <= lon_norm <= lon_end
+    else:
+        # Wrap-around case (e.g., Acidalia Planitia: 305.12 to 16.18)
+        return lon_norm >= lon_start or lon_norm <= lon_end
