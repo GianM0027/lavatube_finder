@@ -4,9 +4,9 @@ import numpy as np
 import tempfile
 from typing import Tuple, Dict
 from matplotlib import pyplot as plt
+from typing import Dict
 
 plt.style.use('default')
-
 
 class HiriseDTM:
     """
@@ -90,127 +90,10 @@ class HiriseDTM:
         # return image portion and its coordinates as (row,column)=(y,x)
         return image_subset, (y, x)
 
-    @classmethod
-    def _which_pixels_are_visible(cls, altitudes):
-        """
-        Given a line of pixels of length "fov_distance", where the rover stands in the first one,
-        compute which ones are visible from there.
-        """
-        visibles = [False] * len(altitudes)
-        visibles[0] = True  # rover sees the pixel it's in
-
-        rover_altitude = altitudes[0]
-        max_slope = float("-inf")
-
-        for distance in range(1, len(altitudes)):
-            if altitudes[distance] == np.inf:
-                visibles[distance] = True
-                continue
-
-            slope = (altitudes[distance] - rover_altitude) / distance
-            if slope >= max_slope:
-                visibles[distance] = True
-                max_slope = slope
-
-        return visibles
-
-    def get_fov_mask(self, position, fov_distance, action_to_direction):
-        """
-        Given the agent global location and its fov distance, compute the points that are visible within the fov distance
-        along the possible directions it can move towards.
-        """
-        mask_size = (fov_distance * 2) + 1
-        fov_mask = np.zeros((mask_size, mask_size))
-
-        center = np.array([fov_distance, fov_distance])
-
-        for _, action_direction in action_to_direction.items():
-            idx_list = []
-            for distance in range(fov_distance + 1):
-                idx = np.array(position) + action_direction * distance
-
-                # map borders control
-                if not (0 <= idx[0] < self.numpy_image.shape[0] and 0 <= idx[1] < self.numpy_image.shape[1]):
-                    break
-                idx_list.append(idx)
-
-            if not idx_list:
-                continue
-
-            altitudes = [self.numpy_image[tuple(idx)] for idx in idx_list]
-            visible_pixels = self._which_pixels_are_visible(altitudes)
-
-            for idx, visible_pixel in zip(idx_list, visible_pixels):
-                idx_to_update = center + (idx - position)
-                if 0 <= idx_to_update[0] < mask_size and 0 <= idx_to_update[1] < mask_size:
-                    fov_mask[tuple(idx_to_update)] = visible_pixel
-
-        return fov_mask
-
-    def get_possible_moves(self, position, moves, max_step, max_drop, local_map_size, local_map_position):
-        """
-        Given a global location (y, x), returns a 3x3 boolean matrix of possible moves.
-        - 1 = rover can move there
-        - 0 = rover cannot move there
-        """
-        possible_moves = np.ones((3, 3), dtype=bool)
-        y, x = position
-        current_altitude = self.numpy_image[y, x]
-
-        for _, move in moves.items():
-            moves_idx = np.array((1, 1)) + move  # map move to 3x3 possible_moves matrix index
-            new_y, new_x = np.array(position) + move
-
-            # Out of bounds check for y
-            if (new_y < local_map_position[0] or new_x < local_map_position[1] or
-                    new_y >= local_map_position[0] + local_map_size or new_x >= local_map_position[1] + local_map_size):
-                possible_moves[moves_idx[0], moves_idx[1]] = 0
-                continue
-
-            new_altitude = self.numpy_image[new_y, new_x]
-
-            # Invalid terrain
-            if new_altitude == np.inf:
-                possible_moves[moves_idx[0], moves_idx[1]] = 0
-                continue
-
-            # Too steep to climb
-            if new_altitude - current_altitude > max_step:
-                possible_moves[moves_idx[0], moves_idx[1]] = 0
-
-            # Too steep downward drop
-            if current_altitude - new_altitude > max_drop:
-                possible_moves[moves_idx[0], moves_idx[1]] = 0
-
-        return possible_moves
-
-    def get_adjacency_list(self, moves, max_step, max_drop, local_map_size, local_map_position):
-        adjacency_list = {}
-
-        for global_y in range(local_map_position[0], local_map_position[0] + local_map_size):
-            for global_x in range(local_map_position[1], local_map_position[1] + local_map_size):
-                local_y = global_y - local_map_position[0]
-                local_x = global_x - local_map_position[1]
-
-                possible_moves = self.get_possible_moves(
-                    (global_y, global_x),
-                    moves,
-                    max_step,
-                    max_drop,
-                    local_map_size,
-                    local_map_position
-                )
-
-                neighbors = []
-                center = np.array((1, 1))
-                for move in moves.values():
-                    idx = tuple(center + move)
-                    if possible_moves[idx]:
-                        neighbors.append((local_y + move[0], local_x + move[1]))
-
-                adjacency_list[(local_y, local_x)] = neighbors
-
-        return adjacency_list
+    def apply_nodata_patch(self, y, x, size):
+        """Given a coordinate (upper left corner) and a patch size, apply a no-data patch to the dtm to obscure that area"""
+        black_fill = np.full(shape=(size, size), fill_value=np.inf)
+        self.numpy_image[y:y + size, x:x + size] = black_fill
 
     def get_lowest_highest_altitude(self):
         return np.nanmin(self.numpy_image), np.nanmax(self.numpy_image)
@@ -228,8 +111,6 @@ class HiriseDTM:
         plt.colorbar(label="Elevation (m)")
         plt.title("HiRISE DTM")
         plt.show()
-
-    from typing import Dict
 
     def _get_metadata(self) -> Dict:
         """

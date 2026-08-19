@@ -2,6 +2,10 @@ import os
 import json
 import pygmt
 import pandas as pd
+import random
+import pyproj
+import stackstac
+from pystac_client import Client
 
 def region_changed(data_region, region_file):
     if not os.path.exists(region_file):
@@ -75,3 +79,9 @@ def is_point_in_region(lat, lon, region_coordinates):
     else:
         # Wrap-around case (e.g., Acidalia Planitia: 305.12 to 16.18)
         return lon_norm >= lon_start or lon_norm <= lon_end
+
+def sample_image_size(size_prob_dict):
+    """Samples an image size directly from the size-probability dictionary."""
+    population = list(size_prob_dict.keys())
+    weights = list(size_prob_dict.values())
+    return random.choices(population, weights=weights, k=1)[0]
