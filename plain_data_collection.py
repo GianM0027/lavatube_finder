@@ -1,10 +1,12 @@
 import os
 import sys
 import json
+import warnings
 import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
 import rasterio
+from rasterio.transform import xy
 from PIL import Image
 import torch
 from tqdm import tqdm
@@ -33,7 +35,6 @@ with open(deeplandforms_path, 'r') as json_file:
     deep_landforms_metadata = json.load(json_file)
     deep_landforms_metadata_imgs = pd.DataFrame(deep_landforms_metadata["images"])
     deep_landforms_metadata_annotations = pd.DataFrame(deep_landforms_metadata["annotations"])
-    deep_landforms_metadata_categories = pd.DataFrame(deep_landforms_metadata["categories"])
 
 plain_terrain_annotations = pd.DataFrame(columns=deep_landforms_metadata_annotations.columns)
 
@@ -44,47 +45,30 @@ hirise_imgs = [
 
 stop_pipeline = False
 
-# Initialize variables to accumulate mean and std
+# Compute global stats over DeepLandforms dataset
 mean = torch.zeros(1)
 std = torch.zeros(1)
 num_pixels = 0
-
-# Dictionary to keep track of image shapes
 shapes = {}
 
-# Loop through the global dataset
 for _, row in tqdm(
         deep_landforms_metadata_imgs.iterrows(),
         desc="Collecting image dimensions and computing statistics",
         total=len(deep_landforms_metadata_imgs)
 ):
     img = Image.open(os.path.join("data", f'DeepLandforms_dataset/{row["file_name"]}'))
-
-    transform = transforms.Compose([
-        transforms.PILToTensor()
-    ])
-
+    transform = transforms.Compose([transforms.PILToTensor()])
     img = transform(img).float()
     channels, height, width = img.shape
 
-    # Update shape occurrences
     shape = (width, height)
     shapes[shape] = shapes.get(shape, 0) + 1
-
-    # Compute the number of pixels per image
     num_pixels += height * width
-
-    # Sum the mean values of each channel
     mean += img.view(channels, -1).mean(dim=1)
-
-    # Sum the standard deviation of each channel
     std += img.view(channels, -1).std(dim=1)
 
 mean /= len(deep_landforms_metadata_imgs)
 std /= len(deep_landforms_metadata_imgs)
-
-smallest_shape = min(shapes, key=lambda s: s[0] * s[1])
-biggest_shape = max(shapes, key=lambda s: s[0] * s[1])
 
 size_counts = {shape[0]: count for shape, count in shapes.items()}
 sizes = list(size_counts.keys())
@@ -94,10 +78,6 @@ sum_counts = sum(counts)
 probabilities = [count / sum_counts for count in counts]
 size_probability_dist = {size: prob for size, prob in zip(sizes, probabilities)}
 
-print("Mean and standard deviation of image channels:")
-print(f"Mean: {mean}")
-print(f"Std: {std}\n")
-
 plt.ion()  # Non-blocking plot mode
 
 for jp2_image in hirise_imgs:
@@ -106,6 +86,12 @@ for jp2_image in hirise_imgs:
 
     filepath = f"data/DTMs/{jp2_image}"
     print(f"\nLoading DTM image: {jp2_image}...")
+
+    # Extract CRS and affine transform metadata directly from rasterio source
+    with rasterio.open(filepath) as src:
+        dtm_crs = src.crs
+        dtm_transform = src.transform
+
     dtm_file = HiriseDTM(filepath)
     dtm_name = dtm_file.file_name
 
@@ -153,7 +139,17 @@ for jp2_image in hirise_imgs:
             break
 
         elif user_choice == 'y':
-            # 1. Save crop image as GeoTIFF
+            # --- CALCULATE GEOGRAPHIC COORDINATES ---
+            # 1. Projected coordinates (x_proj, y_proj) in Mars System (e.g. Equirectangular meters)
+            x_min_proj, y_max_proj = xy(dtm_transform, y, x)
+            x_center_proj, y_center_proj = xy(dtm_transform, y + sample_size // 2, x + sample_size // 2)
+
+            # 2. Window transformation matrix for sub-crop
+            crop_transform = rasterio.windows.transform(
+                (y, x, sample_size, sample_size), dtm_transform
+            )
+
+            # 1. Save GeoTIFF file retaining spatial CRS & Transform
             crop_filename = f"{dtm_name}_y{y}_x{x}_s{sample_size}.tif"
             crop_path = os.path.join(output_dir, crop_filename)
 
@@ -164,39 +160,57 @@ for jp2_image in hirise_imgs:
                     height=image.shape[0],
                     width=image.shape[1],
                     count=1,
-                    dtype=image.dtype
+                    dtype=image.dtype,
+                    crs=dtm_crs,
+                    transform=crop_transform
             ) as dst:
                 dst.write(image, 1)
 
-            # 2. Log annotation record
+            # 2. Log metadata record including Mars Coordinates
             new_row = {
                 "file_name": dtm_name,
                 "crop_file": crop_filename,
-                "y": y,
-                "x": x,
+                "pixel_y": y,
+                "pixel_x": x,
                 "size": sample_size,
+                "proj_x_topleft": x_min_proj,
+                "proj_y_topleft": y_max_proj,
+                "proj_x_center": x_center_proj,
+                "proj_y_center": y_center_proj,
+                "crs": str(dtm_crs),
                 "label": "plain_terrain"
             }
+
             plain_terrain_annotations = pd.concat(
                 [plain_terrain_annotations, pd.DataFrame([new_row])],
                 ignore_index=True
             )
 
-            # 3. Apply nodata patch to the DTM instance
-            dtm_file.apply_nodata_patch(y, x, sample_size)
+            # Save annotation CSV
+            annotations_csv = os.path.join(output_dir, "plain_terrain_annotations.csv")
+            plain_terrain_annotations.to_csv(annotations_csv, index=False)
 
-            # 4. Save patch coordinate to global tracking state
+            # 3. Apply nodata patch to DTM memory map
+            dtm_file.apply_black_patch(y, x, sample_size)
+
+            # 4. Record state
             if dtm_name not in dtm_patches_state:
                 dtm_patches_state[dtm_name] = []
 
-            dtm_patches_state[dtm_name].append({"y": int(y), "x": int(x), "size": int(sample_size)})
+            dtm_patches_state[dtm_name].append({
+                "y": int(y),
+                "x": int(x),
+                "size": int(sample_size),
+                "proj_x_center": float(x_center_proj),
+                "proj_y_center": float(y_center_proj)
+            })
 
-            # Update JSON state file on disk after every approved patch
             with open(patches_state_file, "w") as f:
                 json.dump(dtm_patches_state, f, indent=4)
 
             samples_collected += 1
-            print(f"Approved and saved ({samples_collected}/{target_samples})\n")
+            print(
+                f"Approved and saved ({samples_collected}/{target_samples}) | Center: ({x_center_proj:.1f}, {y_center_proj:.1f})\n")
 
         else:
             print("Rejected sample. Picking another region...\n")
