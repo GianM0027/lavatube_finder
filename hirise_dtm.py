@@ -4,23 +4,29 @@ import numpy as np
 import tempfile
 from typing import Tuple, Dict
 from matplotlib import pyplot as plt
-from typing import Dict
+import rasterio.warp
+from pyproj import CRS, Transformer
+import math
+import re
 
 plt.style.use('default')
+
 
 class HiriseDTM:
     """
     This class takes as input the path to a local HiRISE .IMG or .JP2 file, converts it into a NumPy array
     (backed by a memory-mapped file for optimization), and provides a set of utility functions.
 
-    :param img_path: Path to a local HiRISE .IMG or .JP2 file.
+    :param img_path: Path to a local HiRISE .IMG or .JP2 file (supports full paths like "data/DTMs/file.JP2").
     """
 
     def __init__(self, img_path: str | os.PathLike = None, img=None):
         self._temp_file_path = None  # Keep track of temp file to delete later
 
         if img_path:
-            with rasterio.open(img_path) as src:
+            self.img_path = str(img_path)
+
+            with rasterio.open(self.img_path) as src:
                 # 1. Determine shape and verify nodata
                 shape = src.shape
                 nodata = src.nodata
@@ -45,30 +51,65 @@ class HiriseDTM:
             # 6. Flush changes to disk
             self.numpy_image.flush()
 
-            self.img_path = img_path
             # Extracted file name without extension regardless of format (.IMG, .JP2, .jp2, etc.)
-            self.file_name = os.path.splitext(os.path.basename(img_path))[0]
+            self.file_name = os.path.splitext(os.path.basename(self.img_path))[0]
             self.metadata = self._get_metadata()
+
+            # Load companion .LBL boundaries into a class parameter
+            self.bounds = self._load_lbl_bounds()
 
         else:
             data = np.array(img)
             self.numpy_image = data
+            self.bounds = {}
 
     def __del__(self):
         """
         Cleanup: Ensure the temporary file is deleted when the object is destroyed.
         """
-        # Close the memmap reference if possible (numpy handles this usually)
         if hasattr(self, 'numpy_image') and isinstance(self.numpy_image, np.memmap):
-            self.numpy_image._mmap.close()
+            try:
+                self.numpy_image._mmap.close()
+            except Exception:
+                pass
             del self.numpy_image
 
-        # Delete the actual file from disk
         if self._temp_file_path and os.path.exists(self._temp_file_path):
             try:
                 os.remove(self._temp_file_path)
             except PermissionError:
                 pass  # Windows sometimes holds locks longer than expected
+
+    def _load_lbl_bounds(self) -> Dict[str, float]:
+        """
+        Parses the associated companion .LBL file to retrieve exact geographic bounds
+        and stores them as a class parameter. Handles case-insensitive file extensions.
+        """
+        base_path = os.path.splitext(self.img_path)[0]
+
+        # Check for .LBL or .lbl extension
+        lbl_path = base_path + '.LBL'
+        if not os.path.exists(lbl_path):
+            lbl_path = base_path + '.lbl'
+
+        if not os.path.exists(lbl_path):
+            return {"MAX_LAT": None, "MIN_LAT": None, "EAST_LON": None, "WEST_LON": None}
+
+        bounds = {}
+        keys_to_extract = {
+            "MAX_LAT": r"MAXIMUM_LATITUDE\s*=\s*(-?\d+\.?\d*)",
+            "MIN_LAT": r"MINIMUM_LATITUDE\s*=\s*(-?\d+\.?\d*)",
+            "EAST_LON": r"EASTERNMOST_LONGITUDE\s*=\s*(-?\d+\.?\d*)",
+            "WEST_LON": r"WESTERNMOST_LONGITUDE\s*=\s*(-?\d+\.?\d*)"
+        }
+
+        with open(lbl_path, 'r') as f:
+            content = f.read()
+            for key, pattern in keys_to_extract.items():
+                match = re.search(pattern, content)
+                bounds[key] = float(match.group(1)) if match else None
+
+        return bounds
 
     def get_portion_of_map(self, size, max_percentage_inf=0):
         # Extracts a size x size portion of the image, avoiding too many np.inf
@@ -123,7 +164,6 @@ class HiriseDTM:
         parts = self.file_name.split("_")
 
         # Case 1: Standard HiRISE DTM naming convention (6 parts)
-        # Example: DTEEC_016460_2230_016170_2230_G01
         if len(parts) == 6:
             aabcd, xxxxxx, xxxx, yyyyyy, yyyy, Vnn = parts
 
@@ -160,21 +200,46 @@ class HiriseDTM:
             }
 
         # Case 2: Standard HiRISE RDR / Ortho Image JP2 naming convention (4 parts)
-        # Example: ESP_043599_1650_RED
         elif len(parts) == 4:
             phase_or_type, orbit_number, lat_band, band_color = parts
 
             return {
                 "product_type": "Ortho Image",
-                "phase": phase_or_type,  # e.g., ESP or PSP
+                "phase": phase_or_type,
                 "orbit_number": orbit_number,
                 "latitude_band": lat_band,
-                "band_color": band_color  # e.g., RED or COLOR
+                "band_color": band_color
             }
 
-        # Fallback for unexpected file name structures
         else:
             return {
                 "product_type": unk,
                 "raw_filename": self.file_name
             }
+
+    def get_pixel_coordinate(self, row: int, col: int) -> Tuple[float, float]:
+        """
+        Returns the projected coordinates (Easting, Northing) in meters for a pixel (row, col).
+        """
+        with rasterio.open(self.img_path) as src:
+            x, y = src.transform * (col, row)
+            return x, y
+
+    def get_lat_lon(self, row: int, col: int) -> Tuple[float, float]:
+        """
+        Returns global Mars geographic coordinates (Latitude, Longitude)
+        for a pixel (row, col) using the saved .LBL bounds.
+        """
+        if not getattr(self, 'bounds', None) or any(v is None for v in self.bounds.values()):
+            raise ValueError(
+                f"LBL bounds are missing or incomplete. Ensure the companion .LBL file "
+                f"is saved in the same directory as {self.img_path}."
+            )
+
+        height, width = self.numpy_image.shape[:2]
+
+        # Linear interpolation across the verified PDS image extent
+        lat = self.bounds['MAX_LAT'] - (row / height) * (self.bounds['MAX_LAT'] - self.bounds['MIN_LAT'])
+        lon = self.bounds['WEST_LON'] + (col / width) * (self.bounds['EAST_LON'] - self.bounds['WEST_LON'])
+
+        return lat, lon

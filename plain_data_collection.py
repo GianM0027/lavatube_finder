@@ -6,8 +6,6 @@ import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
 import rasterio
-from pyproj import Transformer
-from rasterio.transform import xy
 from PIL import Image
 import torch
 from tqdm import tqdm
@@ -41,8 +39,12 @@ with open(deeplandforms_path, 'r') as json_file:
 plain_terrain_annotations = pd.DataFrame(columns=deep_landforms_metadata_annotations.columns)
 
 hirise_imgs = [
-    "ESP_043599_1650_RED.JP2", "ESP_087423_2360_RED.JP2", "ESP_087440_2565_RED.JP2",
-    "ESP_087443_2650_RED.JP2", "ESP_087409_2420_RED.JP2", "ESP_087422_2570_RED.JP2"
+    "ESP_011287_2165_RED.JP2",
+    "ESP_011293_1710_RED.JP2",
+    "ESP_011325_1845_RED.JP2",
+    "ESP_011335_1005_RED.JP2",
+    "ESP_043599_1650_RED.JP2",
+    "ESP_087433_2545_RED.JP2"
 ]
 
 stop_pipeline = False
@@ -107,7 +109,8 @@ for jp2_image in hirise_imgs:
         if load_choice == 'y':
             print("Applying saved patches to DTM...")
             for patch in saved_patches:
-                dtm_file.apply_black_patch(patch["y"], patch["x"], patch["size"])
+                # Fixed method call from apply_black_patch to apply_nodata_patch
+                dtm_file.apply_nodata_patch(patch["y"], patch["x"], patch["size"])
             print("Patches restored successfully.")
 
     samples_collected = 0
@@ -140,24 +143,18 @@ for jp2_image in hirise_imgs:
             stop_pipeline = True
             break
 
-
-
         elif user_choice == 'y':
-            # 1. Compute Projected Coordinates (Meters in Mars Projection System)
-            x_min_proj, y_max_proj = xy(dtm_transform, y, x)
-            x_center_proj, y_center_proj = xy(
-                dtm_transform, y + sample_size // 2, x + sample_size // 2
+            # 1. Retrieve Projected Coordinates (Meters) directly via class method
+            x_min_proj, y_max_proj = dtm_file.get_pixel_coordinate(y, x)
+            x_center_proj, y_center_proj = dtm_file.get_pixel_coordinate(
+                y + sample_size // 2, x + sample_size // 2
             )
 
-            # 2. Transform Projected Meters -> Mars Global Latitude & Longitude (Degrees)
-            # IAU 2000 Mars Geographic Coordinate System (Geodetic / Planetocentric)
-            try:
-                transformer = Transformer.from_crs(dtm_crs, "IAU_2000:49900", always_xy=True)
-            except Exception:
-                # Fallback to standard EPSG WGS84 equivalent axis mapping if IAU authority is unavailable locally
-                transformer = Transformer.from_crs(dtm_crs, "EPSG:4326", always_xy=True)
-            lon_center, lat_center = transformer.transform(x_center_proj, y_center_proj)
-            lon_topleft, lat_topleft = transformer.transform(x_min_proj, y_max_proj)
+            # 2. Retrieve Global Mars Latitude & Longitude directly via class method
+            lat_topleft, lon_topleft = dtm_file.get_lat_lon(y, x)
+            lat_center, lon_center = dtm_file.get_lat_lon(
+                y + sample_size // 2, x + sample_size // 2
+            )
 
             # 3. Create sub-window transform for GeoTIFF export
             crop_window = rasterio.windows.Window(
@@ -208,7 +205,7 @@ for jp2_image in hirise_imgs:
             plain_terrain_annotations.to_csv(annotations_csv, index=False)
 
             # 6. Apply nodata patch to DTM memory map
-            dtm_file.apply_black_patch(y, x, sample_size)
+            dtm_file.apply_nodata_patch(y, x, sample_size)
 
             # 7. Record state in JSON
             if dtm_name not in dtm_patches_state:
