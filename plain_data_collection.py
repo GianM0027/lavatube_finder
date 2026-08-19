@@ -6,6 +6,7 @@ import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
 import rasterio
+from pyproj import Transformer
 from rasterio.transform import xy
 from PIL import Image
 import torch
@@ -13,6 +14,7 @@ from tqdm import tqdm
 import torchvision.transforms as transforms
 from hirise_dtm import HiriseDTM
 from utils import *
+from rasterio.windows import Window
 
 # Ensure output directory exists
 output_dir = "data/plain_terrain_dataset"
@@ -138,21 +140,34 @@ for jp2_image in hirise_imgs:
             stop_pipeline = True
             break
 
-        elif user_choice == 'y':
-            # --- CALCULATE GEOGRAPHIC COORDINATES ---
-            # 1. Projected coordinates (x_proj, y_proj) in Mars System (e.g. Equirectangular meters)
-            x_min_proj, y_max_proj = xy(dtm_transform, y, x)
-            x_center_proj, y_center_proj = xy(dtm_transform, y + sample_size // 2, x + sample_size // 2)
 
-            # 2. Window transformation matrix for sub-crop
-            crop_transform = rasterio.windows.transform(
-                (y, x, sample_size, sample_size), dtm_transform
+
+        elif user_choice == 'y':
+            # 1. Compute Projected Coordinates (Meters in Mars Projection System)
+            x_min_proj, y_max_proj = xy(dtm_transform, y, x)
+            x_center_proj, y_center_proj = xy(
+                dtm_transform, y + sample_size // 2, x + sample_size // 2
             )
 
-            # 1. Save GeoTIFF file retaining spatial CRS & Transform
+            # 2. Transform Projected Meters -> Mars Global Latitude & Longitude (Degrees)
+            # IAU 2000 Mars Geographic Coordinate System (Geodetic / Planetocentric)
+            try:
+                transformer = Transformer.from_crs(dtm_crs, "IAU_2000:49900", always_xy=True)
+            except Exception:
+                # Fallback to standard EPSG WGS84 equivalent axis mapping if IAU authority is unavailable locally
+                transformer = Transformer.from_crs(dtm_crs, "EPSG:4326", always_xy=True)
+            lon_center, lat_center = transformer.transform(x_center_proj, y_center_proj)
+            lon_topleft, lat_topleft = transformer.transform(x_min_proj, y_max_proj)
+
+            # 3. Create sub-window transform for GeoTIFF export
+            crop_window = rasterio.windows.Window(
+                col_off=x, row_off=y, width=sample_size, height=sample_size
+            )
+            crop_transform = rasterio.windows.transform(crop_window, dtm_transform)
+
+            # 4. Save GeoTIFF file retaining spatial CRS & sub-transform
             crop_filename = f"{dtm_name}_y{y}_x{x}_s{sample_size}.tif"
             crop_path = os.path.join(output_dir, crop_filename)
-
             with rasterio.open(
                     crop_path,
                     'w',
@@ -166,17 +181,19 @@ for jp2_image in hirise_imgs:
             ) as dst:
                 dst.write(image, 1)
 
-            # 2. Log metadata record including Mars Coordinates
+            # 5. Log metadata record including both Projected Meters AND Global Lat/Lon
             new_row = {
                 "file_name": dtm_name,
                 "crop_file": crop_filename,
                 "pixel_y": y,
                 "pixel_x": x,
                 "size": sample_size,
-                "proj_x_topleft": x_min_proj,
-                "proj_y_topleft": y_max_proj,
-                "proj_x_center": x_center_proj,
-                "proj_y_center": y_center_proj,
+                "lat_center": lat_center,
+                "lon_center": lon_center,
+                "lat_topleft": lat_topleft,
+                "lon_topleft": lon_topleft,
+                "proj_x_center_m": x_center_proj,
+                "proj_y_center_m": y_center_proj,
                 "crs": str(dtm_crs),
                 "label": "plain_terrain"
             }
@@ -186,14 +203,14 @@ for jp2_image in hirise_imgs:
                 ignore_index=True
             )
 
-            # Save annotation CSV
+            # Update annotation CSV
             annotations_csv = os.path.join(output_dir, "plain_terrain_annotations.csv")
             plain_terrain_annotations.to_csv(annotations_csv, index=False)
 
-            # 3. Apply nodata patch to DTM memory map
+            # 6. Apply nodata patch to DTM memory map
             dtm_file.apply_black_patch(y, x, sample_size)
 
-            # 4. Record state
+            # 7. Record state in JSON
             if dtm_name not in dtm_patches_state:
                 dtm_patches_state[dtm_name] = []
 
@@ -201,16 +218,19 @@ for jp2_image in hirise_imgs:
                 "y": int(y),
                 "x": int(x),
                 "size": int(sample_size),
-                "proj_x_center": float(x_center_proj),
-                "proj_y_center": float(y_center_proj)
+                "lat_center": float(lat_center),
+                "lon_center": float(lon_center)
             })
 
             with open(patches_state_file, "w") as f:
                 json.dump(dtm_patches_state, f, indent=4)
 
             samples_collected += 1
+
             print(
-                f"Approved and saved ({samples_collected}/{target_samples}) | Center: ({x_center_proj:.1f}, {y_center_proj:.1f})\n")
+                f"Approved ({samples_collected}/{target_samples}) | "
+                f"Mars Center: ({lat_center:.4f}° N, {lon_center:.4f}° E)\n"
+            )
 
         else:
             print("Rejected sample. Picking another region...\n")
