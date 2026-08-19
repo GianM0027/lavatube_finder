@@ -14,6 +14,22 @@ from hirise_dtm import HiriseDTM
 from utils import *
 from rasterio.windows import Window
 
+
+def undo_nodata_patch(self, y: int, x: int, size: int):
+    """
+    Restores a patched region back to its original values from the source image file.
+    """
+    with rasterio.open(self.img_path) as src:
+        window = rasterio.windows.Window(x, y, size, size)
+        original_data = src.read(1, window=window).astype('float32')
+        nodata = src.nodata
+        if nodata is not None:
+            mask = (original_data == nodata)
+            if np.any(mask):
+                original_data[mask] = np.inf
+        self.numpy_image[y:y + size, x:x + size] = original_data
+    self.numpy_image.flush()
+
 # Ensure output directory exists
 output_dir = "data/plain_terrain_dataset"
 os.makedirs(output_dir, exist_ok=True)
@@ -39,10 +55,10 @@ with open(deeplandforms_path, 'r') as json_file:
 plain_terrain_annotations = pd.DataFrame(columns=deep_landforms_metadata_annotations.columns)
 
 hirise_imgs = [
-    "ESP_011287_2165_RED.JP2",
-    "ESP_011293_1710_RED.JP2",
-    "ESP_011325_1845_RED.JP2",
-    "ESP_011335_1005_RED.JP2",
+    #"ESP_011287_2165_RED.JP2",
+    #"ESP_011293_1710_RED.JP2",
+    #"ESP_011325_1845_RED.JP2", very bad map
+    #"ESP_011335_1005_RED.JP2", quite bad map
     "ESP_043599_1650_RED.JP2",
     "ESP_087433_2545_RED.JP2"
 ]
@@ -99,6 +115,9 @@ for jp2_image in hirise_imgs:
     dtm_file = HiriseDTM(filepath)
     dtm_name = dtm_file.file_name
 
+    # Total pixels available in this specific DTM
+    total_map_pixels = dtm_file.numpy_image.shape[0] * dtm_file.numpy_image.shape[1]
+
     # Check if there are saved patches for this DTM file
     if dtm_name in dtm_patches_state and len(dtm_patches_state[dtm_name]) > 0:
         saved_patches = dtm_patches_state[dtm_name]
@@ -109,7 +128,6 @@ for jp2_image in hirise_imgs:
         if load_choice == 'y':
             print("Applying saved patches to DTM...")
             for patch in saved_patches:
-                # Fixed method call from apply_black_patch to apply_nodata_patch
                 dtm_file.apply_nodata_patch(patch["y"], patch["x"], patch["size"])
             print("Patches restored successfully.")
 
@@ -119,19 +137,26 @@ for jp2_image in hirise_imgs:
     print(f"--- Processing {jp2_image} ---")
 
     while samples_collected < target_samples and not stop_pipeline:
+        # Calculate current map coverage percentage based on saved state
+        approved_pixels = sum(p["size"] ** 2 for p in dtm_patches_state.get(dtm_name, []))
+        coverage_pct = (approved_pixels / total_map_pixels) * 100
+
         sample_size = sample_image_size(size_probability_dist)
-        image, (y, x) = dtm_file.get_portion_of_map(sample_size)
+        image, (y, x) = dtm_file.get_portion_of_map(sample_size, max_percentage_inf=0)
 
         fig, ax = plt.subplots(figsize=(6, 6))
-        ax.imshow(image, cmap="terrain")
+        # Plotted in Black and White (grayscale)
+        ax.imshow(image, cmap="gray")
         ax.set_title(
-            f"{jp2_image}\nSample {samples_collected + 1}/{target_samples} (Size: {sample_size}px)"
+            f"{jp2_image} | Coverage: {coverage_pct:.2f}%\n"
+            f"Sample {samples_collected + 1}/{target_samples} (Size: {sample_size}px)"
         )
         plt.show(block=False)
         plt.pause(0.1)
 
         user_choice = input(
-            f"Sample {samples_collected + 1}/{target_samples} | Accept region? [y = Accept, n = Reject, q = Save & Quit]: "
+            f"[{coverage_pct:.2f}% map used] Sample {samples_collected + 1}/{target_samples} | "
+            f"Accept region? [y = Accept, n = Reject, u = Undo last, q = Save & Quit]: "
         ).strip().lower()
 
         plt.close(fig)
@@ -142,6 +167,36 @@ for jp2_image in hirise_imgs:
                 dtm_file.numpy_image.flush()
             stop_pipeline = True
             break
+
+        elif user_choice == 'u':
+            # Undo last accepted sample action
+            if samples_collected > 0 and dtm_name in dtm_patches_state and len(dtm_patches_state[dtm_name]) > 0:
+                last_patch = dtm_patches_state[dtm_name].pop()
+                y_u, x_u, size_u = last_patch["y"], last_patch["x"], last_patch["size"]
+
+                # Remove saved crop file
+                crop_filename = f"{dtm_name}_y{y_u}_x{x_u}_s{size_u}.tif"
+                crop_path = os.path.join(output_dir, crop_filename)
+                if os.path.exists(crop_path):
+                    os.remove(crop_path)
+
+                # Restore original pixels in memory map
+                dtm_file.undo_nodata_patch(y_u, x_u, size_u)
+
+                # Remove last row from annotations dataframe and update CSV
+                if len(plain_terrain_annotations) > 0:
+                    plain_terrain_annotations = plain_terrain_annotations.iloc[:-1].reset_index(drop=True)
+                    annotations_csv = os.path.join(output_dir, "plain_terrain_annotations.csv")
+                    plain_terrain_annotations.to_csv(annotations_csv, index=False)
+
+                # Update JSON state file
+                with open(patches_state_file, "w") as f:
+                    json.dump(dtm_patches_state, f, indent=4)
+
+                samples_collected -= 1
+                print(f"Undo successful! Reverted last sample. Current count: {samples_collected}/{target_samples}\n")
+            else:
+                print("Nothing to undo for this image session.\n")
 
         elif user_choice == 'y':
             # 1. Retrieve Projected Coordinates (Meters) directly via class method
@@ -204,7 +259,7 @@ for jp2_image in hirise_imgs:
             annotations_csv = os.path.join(output_dir, "plain_terrain_annotations.csv")
             plain_terrain_annotations.to_csv(annotations_csv, index=False)
 
-            # 6. Apply nodata patch to DTM memory map
+            # 6. Apply nodata patch to DTM memory map (masks the region with np.inf so it won't be sampled again)
             dtm_file.apply_nodata_patch(y, x, sample_size)
 
             # 7. Record state in JSON
@@ -224,8 +279,13 @@ for jp2_image in hirise_imgs:
 
             samples_collected += 1
 
+            # Recalculate coverage for print statement
+            approved_pixels = sum(p["size"] ** 2 for p in dtm_patches_state[dtm_name])
+            coverage_pct = (approved_pixels / total_map_pixels) * 100
+
             print(
                 f"Approved ({samples_collected}/{target_samples}) | "
+                f"Map Coverage: {coverage_pct:.2f}% | "
                 f"Mars Center: ({lat_center:.4f}° N, {lon_center:.4f}° E)\n"
             )
 

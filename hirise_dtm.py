@@ -112,29 +112,44 @@ class HiriseDTM:
         return bounds
 
     def get_portion_of_map(self, size, max_percentage_inf=0):
-        # Extracts a size x size portion of the image, avoiding too many np.inf
+        """
+        Extracts a size x size portion of the image, strictly avoiding
+        infinities, NaNs, and already-patched (seen) areas.
+        """
         img_height, img_width = self.numpy_image.shape[:2]
+        max_attempts = 10000
+        attempts = 0
 
-        while True:
-            # pick random top-left corner
+        while attempts < max_attempts:
+            attempts += 1
+            # Pick random top-left corner
             x = np.random.randint(0, img_width - size + 1)
             y = np.random.randint(0, img_height - size + 1)
 
-            # extract portion
+            # Extract portion
             image_subset = np.array(self.numpy_image[y:y + size, x:x + size])
 
-            # count infinities
-            num_inf = np.sum(np.isinf(image_subset))
-            if num_inf <= max_percentage_inf * (size * size):
-                break
+            # Count both zeros, infinities (user patches / native nodata) and NaNs
+            num_invalid = np.sum(
+                (image_subset == 0) | np.isinf(image_subset) | np.isnan(image_subset)
+            )
 
-        # return image portion and its coordinates as (row,column)=(y,x)
-        return image_subset, (y, x)
+            if num_invalid <= max_percentage_inf * (size * size):
+                return image_subset, (y, x)
+
+        raise RuntimeError(
+            "Could not find a valid, unseen portion of the map. "
+            "The map may be nearly fully covered or saturated with no-data values."
+        )
 
     def apply_nodata_patch(self, y, x, size):
-        """Given a coordinate (upper left corner) and a patch size, apply a no-data patch to the dtm to obscure that area"""
-        black_fill = np.full(shape=(size, size), fill_value=np.inf)
-        self.numpy_image[y:y + size, x:x + size] = black_fill
+        """
+        Given a coordinate (upper left corner) and a patch size,
+        fills the area with zeros to mask it out as invalid/seen.
+        """
+        zero_fill = np.full(shape=(size, size), fill_value=0.0, dtype='float32')
+        self.numpy_image[y:y + size, x:x + size] = zero_fill
+        self.numpy_image.flush()
 
     def get_lowest_highest_altitude(self):
         return np.nanmin(self.numpy_image), np.nanmax(self.numpy_image)
