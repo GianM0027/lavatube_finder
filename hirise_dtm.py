@@ -1,72 +1,60 @@
 import os
-import rasterio
-import numpy as np
-import tempfile
-from typing import Tuple, Dict
-from matplotlib import pyplot as plt
-import rasterio.warp
-from pyproj import CRS, Transformer
-import math
 import re
+import tempfile
+from typing import Dict, Tuple
+import matplotlib.pyplot as plt
+import numpy as np
+import rasterio
 
 plt.style.use('default')
+
+# HiRISE special values and metadata saturation flags according to PDS standards
+HIRISE_SPECIAL_VALUES = {0, 1, 2, 1022, 1023}
 
 
 class HiriseDTM:
     """
-    This class takes as input the path to a local HiRISE .IMG or .JP2 file, converts it into a NumPy array
-    (backed by a memory-mapped file for optimization), and provides a set of utility functions.
-
-    :param img_path: Path to a local HiRISE .IMG or .JP2 file (supports full paths like "data/DTMs/file.JP2").
+    Handles memory-mapped ingestion, patch extraction, and masking for HiRISE
+    _RED.JP2 orthoimages prepared for deep learning workflows.
     """
 
     def __init__(self, img_path: str | os.PathLike = None, img=None):
-        self._temp_file_path = None  # Keep track of temp file to delete later
+        self._temp_file_path = None  # Tracks temp file for cleanup
 
         if img_path:
             self.img_path = str(img_path)
 
             with rasterio.open(self.img_path) as src:
-                # 1. Determine shape and verify nodata
                 shape = src.shape
-                nodata = src.nodata
-
-                # 2. Create a temporary file on disk to hold the array data
                 tf = tempfile.NamedTemporaryFile(delete=False, prefix='hirise_memmap_', suffix='.dat')
                 self._temp_file_path = tf.name
                 tf.close()
 
-                # 3. Create a memory-mapped array (float32 saves 50% RAM vs float64)
-                self.numpy_image = np.memmap(self._temp_file_path, dtype='float32', mode='w+', shape=shape)
-
-                # 4. Read data directly from source into the memmap
+                # Read raw 16-bit uint container straight to memmap
+                self.numpy_image = np.memmap(self._temp_file_path, dtype='uint16', mode='w+', shape=shape)
                 src.read(1, out=self.numpy_image)
 
-            # 5. Handle nodata (Process infinite walls)
-            if nodata is not None:
-                mask = (self.numpy_image == nodata)
-                if np.any(mask):
-                    self.numpy_image[mask] = np.inf
-
-            # 6. Flush changes to disk
+            # Flush modifications to disk
             self.numpy_image.flush()
 
-            # Extracted file name without extension regardless of format (.IMG, .JP2, .jp2, etc.)
             self.file_name = os.path.splitext(os.path.basename(self.img_path))[0]
             self.metadata = self._get_metadata()
-
-            # Load companion .LBL boundaries into a class parameter
             self.bounds = self._load_lbl_bounds()
 
         else:
-            data = np.array(img)
-            self.numpy_image = data
+            self.numpy_image = np.array(img, dtype='float32') if img is not None else None
             self.bounds = {}
 
+    def _apply_initial_mask(self, nodata_val=None):
+        """Replaces native nodata and HiRISE special flags with np.nan."""
+        mask = np.isin(self.numpy_image, list(HIRISE_SPECIAL_VALUES))
+        if nodata_val is not None:
+            mask |= (self.numpy_image == nodata_val)
+
+        self.numpy_image[mask] = np.nan
+
     def __del__(self):
-        """
-        Cleanup: Ensure the temporary file is deleted when the object is destroyed.
-        """
+        """Cleanup temporary memory-map file upon object deletion."""
         if hasattr(self, 'numpy_image') and isinstance(self.numpy_image, np.memmap):
             try:
                 self.numpy_image._mmap.close()
@@ -78,146 +66,115 @@ class HiriseDTM:
             try:
                 os.remove(self._temp_file_path)
             except PermissionError:
-                pass  # Windows sometimes holds locks longer than expected
+                pass
 
     def _load_lbl_bounds(self) -> Dict[str, float]:
-        """
-        Parses the associated companion .LBL file to retrieve exact geographic bounds
-        and stores them as a class parameter. Handles case-insensitive file extensions.
-        """
+        """Parses the companion .LBL file for map parameters."""
         base_path = os.path.splitext(self.img_path)[0]
-
-        # Check for .LBL or .lbl extension
-        lbl_path = base_path + '.LBL'
-        if not os.path.exists(lbl_path):
-            lbl_path = base_path + '.lbl'
+        lbl_path = base_path + '.LBL' if os.path.exists(base_path + '.LBL') else base_path + '.lbl'
 
         if not os.path.exists(lbl_path):
-            return {"MAX_LAT": None, "MIN_LAT": None, "EAST_LON": None, "WEST_LON": None}
+            return {"MAX_LAT": None, "MIN_LAT": None, "EAST_LON": None, "WEST_LON": None, "MAP_SCALE": None}
 
         bounds = {}
-        keys_to_extract = {
+        patterns = {
             "MAX_LAT": r"MAXIMUM_LATITUDE\s*=\s*(-?\d+\.?\d*)",
             "MIN_LAT": r"MINIMUM_LATITUDE\s*=\s*(-?\d+\.?\d*)",
             "EAST_LON": r"EASTERNMOST_LONGITUDE\s*=\s*(-?\d+\.?\d*)",
-            "WEST_LON": r"WESTERNMOST_LONGITUDE\s*=\s*(-?\d+\.?\d*)"
+            "WEST_LON": r"WESTERNMOST_LONGITUDE\s*=\s*(-?\d+\.?\d*)",
+            "MAP_SCALE": r"MAP_SCALE\s*=\s*(-?\d+\.?\d*)"
         }
 
         with open(lbl_path, 'r') as f:
             content = f.read()
-            for key, pattern in keys_to_extract.items():
+            for key, pattern in patterns.items():
                 match = re.search(pattern, content)
                 bounds[key] = float(match.group(1)) if match else None
 
         return bounds
 
-    def get_portion_of_map(self, size, max_percentage_inf=0):
+    def get_portion_of_map(self, size: int, max_percentage_invalid: float = 0.0) -> Tuple[np.ndarray, Tuple[int, int]]:
         """
-        Extracts a size x size portion of the image, strictly avoiding
-        infinities, NaNs, and already-patched (seen) areas.
+        Extracts a random size x size patch, strictly constraining the fraction of
+        invalid/masked (NaN) pixels allowed inside the patch.
+
+        max_percentage_invalid is between 0-1
         """
         img_height, img_width = self.numpy_image.shape[:2]
         max_attempts = 10000
-        attempts = 0
 
-        while attempts < max_attempts:
-            attempts += 1
-            # Pick random top-left corner
+        for _ in range(max_attempts):
             x = np.random.randint(0, img_width - size + 1)
             y = np.random.randint(0, img_height - size + 1)
 
-            # Extract portion
-            image_subset = np.array(self.numpy_image[y:y + size, x:x + size])
+            # Read only the tiny patch into RAM
+            patch = self.numpy_image[y:y + size, x:x + size].astype('float32')
 
-            # Count both zeros, infinities (user patches / native nodata) and NaNs
-            num_invalid = np.sum(
-                (image_subset == 0) | np.isinf(image_subset) | np.isnan(image_subset)
-            )
+            # Mask invalid values on just this patch
+            invalid_mask = np.isin(patch, list(HIRISE_SPECIAL_VALUES))
+            patch[invalid_mask] = np.nan
 
-            if num_invalid <= max_percentage_inf * (size * size):
-                return image_subset, (y, x)
+            invalid_ratio = np.isnan(patch).mean()
+            if invalid_ratio <= max_percentage_invalid:
+                return patch, (y, x)
 
-        raise RuntimeError(
-            "Could not find a valid, unseen portion of the map. "
-            "The map may be nearly fully covered or saturated with no-data values."
-        )
+        raise RuntimeError("Could not find a valid patch meeting criteria.")
 
-    def apply_nodata_patch(self, y, x, size):
+    def apply_nodata_patch(self, y: int, x: int, size: int) -> None:
         """
-        Given a coordinate (upper left corner) and a patch size,
-        fills the area with zeros to mask it out as invalid/seen.
+        Marks an extracted/seen tile region as invalid using np.nan
+        to prevent future extraction overlapping this region.
         """
-        zero_fill = np.full(shape=(size, size), fill_value=0.0, dtype='float32')
-        self.numpy_image[y:y + size, x:x + size] = zero_fill
+        self.numpy_image[y:y + size, x:x + size] = 0
         self.numpy_image.flush()
 
-    def get_lowest_highest_altitude(self):
-        return np.nanmin(self.numpy_image), np.nanmax(self.numpy_image)
+    def undo_nodata_patch(self, y: int, x: int, size: int) -> None:
+        """Restores a masked region back to its original raw values from the source image."""
+        with rasterio.open(self.img_path) as src:
+            window = rasterio.windows.Window(x, y, size, size)
+            original_data = src.read(1, window=window).astype('float32')
+            nodata = src.nodata
 
-    def plot_dtm(self, dtm=None, figsize: Tuple = (12, 12)) -> None:
-        """
-        :param dtm: dtm to plot (optional), if set to None, the whole map will be plotted.
-        :param figsize: plot figure map_size.
+            # Re-apply special flag and nodata masking
+            mask = np.isin(original_data, list(HIRISE_SPECIAL_VALUES))
+            if nodata is not None:
+                mask |= (original_data == nodata)
 
-        Shows the DTM numpy_image in a matplotlib figure.
-        """
+            original_data[mask] = np.nan
+            self.numpy_image[y:y + size, x:x + size] = original_data
+
+        self.numpy_image.flush()
+
+    def get_min_max_dn(self) -> Tuple[float, float]:
+        """Returns the minimum and maximum valid Digital Number (DN) values."""
+        return float(np.nanmin(self.numpy_image)), float(np.nanmax(self.numpy_image))
+
+    def plot_dtm(self, dtm=None, figsize: Tuple[int, int] = (10, 10)) -> None:
+        """Visualizes the image or patch with grayscale colormap suitable for orthoimages."""
         img_to_plot = dtm if dtm is not None else self.numpy_image
         plt.figure(figsize=figsize)
-        plt.imshow(img_to_plot, cmap="terrain")
-        plt.colorbar(label="Elevation (m)")
-        plt.title("HiRISE DTM")
+        plt.imshow(img_to_plot, cmap="gray")
+        plt.colorbar(label="Digital Number (DN)")
+        plt.title("HiRISE RED Orthoimage")
         plt.show()
 
     def _get_metadata(self) -> Dict:
-        """
-        Returns the metadata of a HiRISE .IMG or .JP2 file based on standard naming conventions.
-        """
-        unk = "unknown"
+        """Parses RDR or DTM metadata from the filename."""
         if not hasattr(self, 'file_name') or not self.file_name:
             return {}
 
         parts = self.file_name.split("_")
 
-        # Case 1: Standard HiRISE DTM naming convention (6 parts)
         if len(parts) == 6:
             aabcd, xxxxxx, xxxx, yyyyyy, yyyy, Vnn = parts
-
-            product_type = "DTM" if aabcd[:2] == "DT" else unk
-            file_type = "Areoid Elevations" if aabcd[2] == "E" else unk
-            projection = "Equirectangular" if aabcd[3] == "E" else "Polar Stereographic" if aabcd[3] == "P" else unk
-
-            grid_spacing = (
-                0.25 if aabcd[4] == "A" else
-                0.5 if aabcd[4] == "B" else
-                1.0 if aabcd[4] == "C" else
-                2.0 if aabcd[4] == "D" else unk
-            )
-
-            producing_institution = {
-                "U": "USGS",
-                "A": "University of Arizona",
-                "C": "CalTech",
-                "N": "NASA Ames",
-                "J": "JPL",
-                "O": "Ohio State",
-                "P": "Planetary Science Institute"
-            }.get(Vnn[0], unk)
-
             return {
-                "product_type": product_type,
-                "file_type": file_type,
-                "projection": projection,
-                "grid_spacing": grid_spacing,
+                "product_type": "DTM" if aabcd[:2] == "DT" else "unknown",
                 "orbit_and_latitude_1": (xxxxxx, xxxx),
                 "orbit_and_latitude_2": (yyyyyy, yyyy),
-                "producing_institution": producing_institution,
                 "version_number": Vnn[1:]
             }
-
-        # Case 2: Standard HiRISE RDR / Ortho Image JP2 naming convention (4 parts)
         elif len(parts) == 4:
             phase_or_type, orbit_number, lat_band, band_color = parts
-
             return {
                 "product_type": "Ortho Image",
                 "phase": phase_or_type,
@@ -226,35 +183,56 @@ class HiriseDTM:
                 "band_color": band_color
             }
 
-        else:
-            return {
-                "product_type": unk,
-                "raw_filename": self.file_name
-            }
+        return {"product_type": "unknown", "raw_filename": self.file_name}
 
     def get_pixel_coordinate(self, row: int, col: int) -> Tuple[float, float]:
-        """
-        Returns the projected coordinates (Easting, Northing) in meters for a pixel (row, col).
-        """
+        """Returns projected coordinates (Easting, Northing) in meters for pixel (row, col)."""
         with rasterio.open(self.img_path) as src:
             x, y = src.transform * (col, row)
             return x, y
 
     def get_lat_lon(self, row: int, col: int) -> Tuple[float, float]:
-        """
-        Returns global Mars geographic coordinates (Latitude, Longitude)
-        for a pixel (row, col) using the saved .LBL bounds.
-        """
+        """Returns global Mars geographic coordinates (Latitude, Longitude) via LBL interpolation."""
         if not getattr(self, 'bounds', None) or any(v is None for v in self.bounds.values()):
             raise ValueError(
-                f"LBL bounds are missing or incomplete. Ensure the companion .LBL file "
-                f"is saved in the same directory as {self.img_path}."
+                f"LBL bounds are missing or incomplete for file {self.img_path}."
             )
 
         height, width = self.numpy_image.shape[:2]
 
-        # Linear interpolation across the verified PDS image extent
         lat = self.bounds['MAX_LAT'] - (row / height) * (self.bounds['MAX_LAT'] - self.bounds['MIN_LAT'])
         lon = self.bounds['WEST_LON'] + (col / width) * (self.bounds['EAST_LON'] - self.bounds['WEST_LON'])
 
         return lat, lon
+
+    def show_image_portion(
+            self,
+            portion: np.ndarray | Tuple[np.ndarray, Tuple[int, int]],
+            figsize: Tuple[int, int] = (6, 6)
+    ) -> None:
+        """
+        Plots an image patch extracted from get_portion_of_map().
+
+        :param portion: NumPy array patch OR tuple (patch, (y, x)) as returned by get_portion_of_map().
+        :param figsize: Tuple specifying the figure dimensions.
+        """
+        coords_title = ""
+
+        # Check if the user passed the full tuple (patch, (y, x)) returned by get_portion_of_map()
+        if isinstance(portion, tuple) and len(portion) == 2 and isinstance(portion[0], np.ndarray):
+            patch, (y, x) = portion
+            coords_title = f" | Top-Left (Y={y}, X={x})"
+        elif isinstance(portion, np.ndarray):
+            patch = portion
+        else:
+            raise ValueError(
+                "Input must be either a NumPy array or the (array, (y, x)) tuple returned by get_portion_of_map()."
+            )
+
+        plt.figure(figsize=figsize)
+        plt.imshow(patch, cmap="gray")
+        plt.colorbar(label="Digital Number (DN)")
+        plt.title(f"HiRISE Patch ({patch.shape[1]}x{patch.shape[0]}){coords_title}")
+        plt.xlabel("Pixel Column (X)")
+        plt.ylabel("Pixel Row (Y)")
+        plt.show()

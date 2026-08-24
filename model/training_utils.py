@@ -1,8 +1,11 @@
 import time
-from typing import Dict, Tuple
+from typing import Dict, Optional, Tuple
 import torch
 import torch.nn as nn
-from torch.utils.data import DataLoader
+from torch.utils.data import DataLoader, random_split
+import torch.nn.functional as F
+from tqdm.auto import tqdm
+
 
 def print_model_structure(model):
     """Stampa la struttura di un modello PyTorch in stile Keras/TensorFlow."""
@@ -53,9 +56,11 @@ def train_one_epoch(
     dataloader: DataLoader,
     criterion: nn.Module,
     optimizer: torch.optim.Optimizer,
-    scaler: torch.cuda.amp.GradScaler,
+    scaler: torch.amp.GradScaler,
     device: torch.device,
     max_norm: float = 1.0,
+    epoch: Optional[int] = None,
+    num_epochs: Optional[int] = None,
 ) -> Tuple[float, float]:
     """Runs one training epoch over the dataloader."""
     model.train()
@@ -63,7 +68,10 @@ def train_one_epoch(
     correct_predictions = 0
     total_samples = 0
 
-    for batch_idx, (static_img, thermal_seq, targets) in enumerate(dataloader):
+    desc = f"Epoch {epoch}/{num_epochs} [train]" if epoch is not None else "Train"
+    progress_bar = tqdm(dataloader, desc=desc, leave=False)
+
+    for batch_idx, (static_img, thermal_seq, targets) in enumerate(progress_bar):
         # Move tensors to GPU/device
         static_img = static_img.to(device, non_blocking=True)
         thermal_seq = thermal_seq.to(device, non_blocking=True)
@@ -72,7 +80,7 @@ def train_one_epoch(
         optimizer.zero_grad(set_to_none=True)
 
         # Automatic Mixed Precision (AMP) for faster GPU training & reduced VRAM
-        with torch.cuda.amp.autocast(enabled=(device.type == "cuda")):
+        with torch.amp.autocast(device_type=device.type, enabled=(device.type == "cuda")):
             logits = model(static_img, thermal_seq)
             loss = criterion(logits, targets)
 
@@ -93,6 +101,11 @@ def train_one_epoch(
         correct_predictions += (preds == targets).sum().item()
         total_samples += batch_size
 
+        progress_bar.set_postfix(
+            loss=f"{running_loss / total_samples:.4f}",
+            acc=f"{correct_predictions / total_samples * 100:.2f}%",
+        )
+
     epoch_loss = running_loss / total_samples
     epoch_acc = correct_predictions / total_samples
     return epoch_loss, epoch_acc
@@ -104,6 +117,8 @@ def validate_one_epoch(
     dataloader: DataLoader,
     criterion: nn.Module,
     device: torch.device,
+    epoch: Optional[int] = None,
+    num_epochs: Optional[int] = None,
 ) -> Tuple[float, float]:
     """Evaluates the model on the validation dataset."""
     model.eval()
@@ -111,12 +126,15 @@ def validate_one_epoch(
     correct_predictions = 0
     total_samples = 0
 
-    for static_img, thermal_seq, targets in dataloader:
+    desc = f"Epoch {epoch}/{num_epochs} [val]" if epoch is not None else "Validate"
+    progress_bar = tqdm(dataloader, desc=desc, leave=False)
+
+    for static_img, thermal_seq, targets in progress_bar:
         static_img = static_img.to(device, non_blocking=True)
         thermal_seq = thermal_seq.to(device, non_blocking=True)
         targets = targets.to(device, non_blocking=True)
 
-        with torch.cuda.amp.autocast(enabled=(device.type == "cuda")):
+        with torch.amp.autocast(device_type=device.type, enabled=(device.type == "cuda")):
             logits = model(static_img, thermal_seq)
             loss = criterion(logits, targets)
 
@@ -125,6 +143,11 @@ def validate_one_epoch(
         preds = torch.argmax(logits, dim=1)
         correct_predictions += (preds == targets).sum().item()
         total_samples += batch_size
+
+        progress_bar.set_postfix(
+            loss=f"{running_loss / total_samples:.4f}",
+            acc=f"{correct_predictions / total_samples * 100:.2f}%",
+        )
 
     epoch_loss = running_loss / total_samples
     epoch_acc = correct_predictions / total_samples
@@ -144,7 +167,7 @@ def train_model(
 ) -> Dict[str, list]:
     """Full training loop with validation, learning rate scheduling, and best model checkpointing."""
     model.to(device)
-    scaler = torch.cuda.amp.GradScaler(enabled=(device.type == "cuda"))
+    scaler = torch.amp.GradScaler(enabled=(device.type == "cuda"))
 
     best_val_acc = 0.0
     history = {"train_loss": [], "train_acc": [], "val_loss": [], "val_acc": []}
@@ -157,10 +180,12 @@ def train_model(
 
         # Train & Validate
         train_loss, train_acc = train_one_epoch(
-            model, train_loader, criterion, optimizer, scaler, device
+            model, train_loader, criterion, optimizer, scaler, device,
+            epoch=epoch, num_epochs=num_epochs,
         )
         val_loss, val_acc = validate_one_epoch(
-            model, val_loader, criterion, device
+            model, val_loader, criterion, device,
+            epoch=epoch, num_epochs=num_epochs,
         )
 
         # Update Learning Rate Scheduler
@@ -207,6 +232,63 @@ def train_model(
     print(f"Training finished. Best Validation Accuracy: {best_val_acc*100:.2f}%")
     return history
 
-def create_dataloaders(training_data, validation_data, batch_size=4, device="cuda"):
 
-    pass
+def pad_collate_fn(batch):
+    """Pads spatial dimensions (H, W) across a batch on CPU."""
+    images, thermals, labels = zip(*batch)
+
+    max_h = max(img.shape[-2] for img in images)
+    max_w = max(img.shape[-1] for img in images)
+
+    padded_images = []
+    padded_thermals = []
+
+    for img, therm in zip(images, thermals):
+        pad_h = max_h - img.shape[-2]
+        pad_w = max_w - img.shape[-1]
+
+        padded_img = F.pad(img, (0, pad_w, 0, pad_h), value=0)
+        padded_therm = F.pad(therm, (0, pad_w, 0, pad_h), value=0)
+
+        padded_images.append(padded_img)
+        padded_thermals.append(padded_therm)
+
+    # Return on CPU! train_one_epoch will move them to GPU cleanly.
+    batched_images = torch.stack(padded_images)
+    batched_thermals = torch.stack(padded_thermals)
+    batched_labels = torch.tensor(labels, dtype=torch.long)
+
+    return batched_images, batched_thermals, batched_labels
+
+
+def create_dataloaders(image_dataset, batch_size=2, val_split=0.2, num_workers=2):
+    val_size = int(len(image_dataset) * val_split)
+    train_size = len(image_dataset) - val_size
+
+    train_dataset, val_dataset = random_split(
+        image_dataset,
+        [train_size, val_size],
+        generator=torch.Generator().manual_seed(42)
+    )
+
+    train_loader = DataLoader(
+        train_dataset,
+        batch_size=batch_size,
+        shuffle=True,
+        collate_fn=pad_collate_fn,
+        num_workers=num_workers,
+        pin_memory=True  # Enables fast CPU->GPU transfer
+    )
+
+    val_loader = DataLoader(
+        val_dataset,
+        batch_size=batch_size,
+        shuffle=False,
+        collate_fn=pad_collate_fn,
+        num_workers=num_workers,
+        pin_memory=True
+    )
+
+    return train_loader, val_loader
+
+

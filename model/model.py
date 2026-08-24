@@ -1,6 +1,6 @@
 import torch
 import torch.nn as nn
-from transformers import ConvNextV2Config, ConvNextV2Model
+from torchvision.models import resnet18, ResNet18_Weights
 
 
 class ThermalTCNBlock(nn.Module):
@@ -36,14 +36,21 @@ class LavaTubeFinder(nn.Module):
         self,
         tcn_channels: int = 256,
         fusion_dim: int = 512,
-        n_classes: int = 3,
+        n_classes: int = 3
     ):
         super().__init__()
 
-        # 1. SINGLE SHARED VISION BACKBONE
-        convnext_config = ConvNextV2Config()
-        self.backbone = ConvNextV2Model(convnext_config)
-        cnn_out_dim = convnext_config.hidden_sizes[-1]  # 768
+        # 1. SINGLE SHARED VISION BACKBONE (ResNet18, ImageNet-pretrained, adapted to 1-channel input)
+        resnet = resnet18(weights=ResNet18_Weights.IMAGENET1K_V1)
+        cnn_out_dim = resnet.fc.in_features  # 512
+
+        # Average the pretrained 3-channel stem weights into a single grayscale channel
+        # instead of re-initializing it, so the low-level pretrained filters still transfer.
+        pretrained_conv1_weight = resnet.conv1.weight.data
+        resnet.conv1 = nn.Conv2d(1, 64, kernel_size=7, stride=2, padding=3, bias=False)
+        resnet.conv1.weight.data = pretrained_conv1_weight.mean(dim=1, keepdim=True)
+
+        self.backbone = nn.Sequential(*list(resnet.children())[:-2])  # drop avgpool + fc, keep conv feature maps
 
         self.pool = nn.AdaptiveAvgPool2d((1, 1))
 
@@ -74,7 +81,7 @@ class LavaTubeFinder(nn.Module):
     ) -> torch.Tensor:
         """
         static_img: (B, 1, H, W)
-        thermal_seq: (B, T, 3, H, W) -> T thermal frames
+        thermal_seq: (B, T, 1, H, W) -> T thermal frames
         """
         B, T, C, H, W = thermal_seq.shape
 
@@ -88,16 +95,16 @@ class LavaTubeFinder(nn.Module):
         )
 
         # --- STEP 2: Pass all 11 images through SHARED Backbone ONCE ---
-        features = self.backbone(all_images).last_hidden_state  # (B*11, 768, H', W')
-        pooled_features = torch.flatten(self.pool(features), start_dim=1)  # (B*11, 768)
+        features = self.backbone(all_images)  # (B*11, 512, H', W')
+        pooled_features = torch.flatten(self.pool(features), start_dim=1)  # (B*11, 512)
 
         # --- STEP 3: Unstack Static and Temporal Features ---
-        # Reshape back to (B, 11, 768)
+        # Reshape back to (B, 11, 512)
         reshaped_features = pooled_features.view(B, 1 + T, -1)
 
         # Index 0 is the static image; Indices 1..10 are the thermal sequence
-        static_vec = reshaped_features[:, 0, :]  # (B, 768)
-        temporal_vecs = reshaped_features[:, 1:, :]  # (B, 10, 768)
+        static_vec = reshaped_features[:, 0, :]  # (B, 512)
+        temporal_vecs = reshaped_features[:, 1:, :]  # (B, 10, 512)
 
         # --- STEP 4: Temporal TCN Processing ---
         # Permute to (B, Feature_Dim=768, Timesteps=10) for 1D Conv

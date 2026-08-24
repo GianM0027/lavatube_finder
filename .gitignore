@@ -9,3 +9,5 @@ data/mars_relief_cache_region.json
 to-do
 trade_off.py
 data/mars_relief_cache_region.json
+model/best_model.pt
+data/mars_relief_cache_region.json

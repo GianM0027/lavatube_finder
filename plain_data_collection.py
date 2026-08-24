@@ -1,4 +1,5 @@
 import os
+import re
 import sys
 import json
 import warnings
@@ -14,28 +15,13 @@ from hirise_dtm import HiriseDTM
 from utils import *
 from rasterio.windows import Window
 
-
-def undo_nodata_patch(self, y: int, x: int, size: int):
-    """
-    Restores a patched region back to its original values from the source image file.
-    """
-    with rasterio.open(self.img_path) as src:
-        window = rasterio.windows.Window(x, y, size, size)
-        original_data = src.read(1, window=window).astype('float32')
-        nodata = src.nodata
-        if nodata is not None:
-            mask = (original_data == nodata)
-            if np.any(mask):
-                original_data[mask] = np.inf
-        self.numpy_image[y:y + size, x:x + size] = original_data
-    self.numpy_image.flush()
-
 # Ensure output directory exists
 output_dir = "data/plain_terrain_dataset"
 os.makedirs(output_dir, exist_ok=True)
 
 # Path to store patch coordinates persistent state
 patches_state_file = os.path.join(output_dir, "dtm_patches_state.json")
+annotations_csv = os.path.join(output_dir, "plain_terrain_annotations.csv")
 
 # Load existing patch states if file exists, else create empty dictionary
 if os.path.exists(patches_state_file):
@@ -52,13 +38,26 @@ with open(deeplandforms_path, 'r') as json_file:
     deep_landforms_metadata_imgs = pd.DataFrame(deep_landforms_metadata["images"])
     deep_landforms_metadata_annotations = pd.DataFrame(deep_landforms_metadata["annotations"])
 
-plain_terrain_annotations = pd.DataFrame(columns=deep_landforms_metadata_annotations.columns)
+# Load existing annotations CSV if it exists so previous labeling runs are never overwritten!
+if os.path.exists(annotations_csv):
+    plain_terrain_annotations = pd.read_csv(annotations_csv)
+    print(f"Successfully loaded {len(plain_terrain_annotations)} existing annotations from previous runs.")
+
+    # Check highest existing image_id to continue seamlessly from it
+    if not plain_terrain_annotations.empty and 'image_id' in plain_terrain_annotations.columns:
+        max_id = plain_terrain_annotations['image_id'].max()
+        next_image_id = int(max_id) + 1 if pd.notna(max_id) and max_id >= 1847 else 1847
+    else:
+        next_image_id = 1847
+else:
+    plain_terrain_annotations = pd.DataFrame(columns=deep_landforms_metadata_annotations.columns)
+    next_image_id = 1847
 
 hirise_imgs = [
     #"ESP_011287_2165_RED.JP2",
     #"ESP_011293_1710_RED.JP2",
-    #"ESP_011325_1845_RED.JP2", very bad map
-    #"ESP_011335_1005_RED.JP2", quite bad map
+    #"ESP_011325_1845_RED.JP2",
+    "ESP_011335_1005_RED.JP2",
     "ESP_043599_1650_RED.JP2",
     "ESP_087433_2545_RED.JP2"
 ]
@@ -105,7 +104,33 @@ for jp2_image in hirise_imgs:
         break
 
     filepath = f"data/DTMs/{jp2_image}"
-    print(f"\nLoading DTM image: {jp2_image}...")
+
+    # Peek at metadata / LBL file to show resolution before heavy loading
+    lbl_path = os.path.splitext(filepath)[0] + ".LBL"
+    resolution = "Unknown"
+    if os.path.exists(lbl_path):
+        with open(lbl_path, "r") as f:
+            match = re.search(r"MAP_SCALE\s*=\s*(-?\d+\.?\d*)", f.read())
+            if match:
+                resolution = match.group(1)
+
+    print(f"\n----------------------------------------")
+    print(f"Image Found: {jp2_image}")
+    print(f"Image Resolution: {resolution} meters/pixel")
+    print(f"----------------------------------------")
+
+    proceed_choice = input(
+        f"Do you want to proceed with {jp2_image}? [y = Proceed, n = Skip, q = Quit pipeline]: ").strip().lower()
+
+    if proceed_choice == 'q':
+        print("Stopping pipeline requested.")
+        stop_pipeline = True
+        break
+    elif proceed_choice != 'y':
+        print(f"Skipping image {jp2_image}.\n")
+        continue
+
+    print(f"\nLoading DTM image into memory: {jp2_image}...")
 
     # Extract CRS and affine transform metadata directly from rasterio source
     with rasterio.open(filepath) as src:
@@ -142,10 +167,9 @@ for jp2_image in hirise_imgs:
         coverage_pct = (approved_pixels / total_map_pixels) * 100
 
         sample_size = sample_image_size(size_probability_dist)
-        image, (y, x) = dtm_file.get_portion_of_map(sample_size, max_percentage_inf=0)
+        image, (y, x) = dtm_file.get_portion_of_map(sample_size, max_percentage_invalid=0.1)
 
         fig, ax = plt.subplots(figsize=(6, 6))
-        # Plotted in Black and White (grayscale)
         ax.imshow(image, cmap="gray")
         ax.set_title(
             f"{jp2_image} | Coverage: {coverage_pct:.2f}%\n"
@@ -175,7 +199,7 @@ for jp2_image in hirise_imgs:
                 y_u, x_u, size_u = last_patch["y"], last_patch["x"], last_patch["size"]
 
                 # Remove saved crop file
-                crop_filename = f"{dtm_name}_y{y_u}_x{x_u}_s{size_u}.tif"
+                crop_filename = f"{dtm_name}_y{y_u}_x{x_u}_s{size_u}.tiff"
                 crop_path = os.path.join(output_dir, crop_filename)
                 if os.path.exists(crop_path):
                     os.remove(crop_path)
@@ -183,11 +207,22 @@ for jp2_image in hirise_imgs:
                 # Restore original pixels in memory map
                 dtm_file.undo_nodata_patch(y_u, x_u, size_u)
 
-                # Remove last row from annotations dataframe and update CSV
-                if len(plain_terrain_annotations) > 0:
+                # Remove last row from annotations dataframe matching this crop file and update CSV
+                if len(plain_terrain_annotations) > 0 and crop_filename in plain_terrain_annotations[
+                    "image_name"].values:
+                    plain_terrain_annotations = plain_terrain_annotations[
+                        plain_terrain_annotations["image_name"] != crop_filename].reset_index(drop=True)
+                elif len(plain_terrain_annotations) > 0:
                     plain_terrain_annotations = plain_terrain_annotations.iloc[:-1].reset_index(drop=True)
-                    annotations_csv = os.path.join(output_dir, "plain_terrain_annotations.csv")
-                    plain_terrain_annotations.to_csv(annotations_csv, index=False)
+
+                plain_terrain_annotations.to_csv(annotations_csv, index=False)
+
+                # Re-evaluate next_image_id based on current dataframe highest ID
+                if not plain_terrain_annotations.empty and 'image_id' in plain_terrain_annotations.columns:
+                    max_id = plain_terrain_annotations['image_id'].max()
+                    next_image_id = int(max_id) + 1 if pd.notna(max_id) and max_id >= 1847 else 1847
+                else:
+                    next_image_id = 1847
 
                 # Update JSON state file
                 with open(patches_state_file, "w") as f:
@@ -199,6 +234,10 @@ for jp2_image in hirise_imgs:
                 print("Nothing to undo for this image session.\n")
 
         elif user_choice == 'y':
+            # Assign current image_id and id, then increment for next
+            current_image_id = next_image_id
+            next_image_id += 1
+
             # 1. Retrieve Projected Coordinates (Meters) directly via class method
             x_min_proj, y_max_proj = dtm_file.get_pixel_coordinate(y, x)
             x_center_proj, y_center_proj = dtm_file.get_pixel_coordinate(
@@ -233,10 +272,10 @@ for jp2_image in hirise_imgs:
             ) as dst:
                 dst.write(image, 1)
 
-            # 5. Log metadata record including both Projected Meters AND Global Lat/Lon
+            # 5. Log metadata record including custom COCO fields
             new_row = {
                 "file_name": dtm_name,
-                "crop_file": crop_filename,
+                "image_name": crop_filename,
                 "pixel_y": y,
                 "pixel_x": x,
                 "size": sample_size,
@@ -247,7 +286,14 @@ for jp2_image in hirise_imgs:
                 "proj_x_center_m": x_center_proj,
                 "proj_y_center_m": y_center_proj,
                 "crs": str(dtm_crs),
-                "label": "plain_terrain"
+                "label": "plain_terrain",
+                "image_id": current_image_id,
+                "id": current_image_id,
+                "iscrowd": 0,
+                "bbox": [],
+                "segmentation": [],
+                "category_id": 2,
+                "area": 0
             }
 
             plain_terrain_annotations = pd.concat(
@@ -255,11 +301,10 @@ for jp2_image in hirise_imgs:
                 ignore_index=True
             )
 
-            # Update annotation CSV
-            annotations_csv = os.path.join(output_dir, "plain_terrain_annotations.csv")
+            # Update annotation CSV safely keeping past records
             plain_terrain_annotations.to_csv(annotations_csv, index=False)
 
-            # 6. Apply nodata patch to DTM memory map (masks the region with np.inf so it won't be sampled again)
+            # 6. Apply nodata patch to DTM memory map (fills with zeros to block re-sampling)
             dtm_file.apply_nodata_patch(y, x, sample_size)
 
             # 7. Record state in JSON
@@ -284,7 +329,7 @@ for jp2_image in hirise_imgs:
             coverage_pct = (approved_pixels / total_map_pixels) * 100
 
             print(
-                f"Approved ({samples_collected}/{target_samples}) | "
+                f"Approved ({samples_collected}/{target_samples}) | Image ID: {current_image_id} | "
                 f"Map Coverage: {coverage_pct:.2f}% | "
                 f"Mars Center: ({lat_center:.4f}° N, {lon_center:.4f}° E)\n"
             )
@@ -292,4 +337,4 @@ for jp2_image in hirise_imgs:
         else:
             print("Rejected sample. Picking another region...\n")
 
-print(f"\nExecution ended. Collected {len(plain_terrain_annotations)} samples in total.")
+print(f"\nExecution ended. Total accumulated annotations in dataset: {len(plain_terrain_annotations)}")
