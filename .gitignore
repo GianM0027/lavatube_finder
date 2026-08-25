@@ -8,6 +8,9 @@ data
 data/mars_relief_cache_region.json
 to-do
 trade_off.py
+themis_phase2_cache
+themis_phase2_output
 data/mars_relief_cache_region.json
-model/best_model.pt
+model/best_model*.pt
+matched_crops_preview.png
 data/mars_relief_cache_region.json
