@@ -106,7 +106,7 @@ def read_window_for_observation(
     ``themis_id_to_thermal_value.ensure_index``; pass ``index_path`` to reuse a
     resolved path across many calls instead of re-checking it each time.
     """
-    from themis_id_to_thermal_value import (
+    from data.thermal.themis_id_to_thermal_value import (
         build_urls,
         ensure_index,
         find_product,

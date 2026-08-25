@@ -39,9 +39,18 @@ import requests
 ASU_ROOT = "https://static.mars.asu.edu/pds/ODTGEO_v2/"
 INDEX_URL = ASU_ROOT + "index/CMIDX_ODTIP.TAB"
 
-CACHE_DIR = Path("themis_phase2_cache")
+# Anchored to this file rather than the working directory, so the index is found
+# whether the caller runs the notebook in data/thermal/, imports the module from
+# the repo root, or invokes this script directly.
+_HERE = Path(__file__).resolve().parent
+
+CACHE_DIR = _HERE / "themis_cache"
 INDEX_FILE = CACHE_DIR / "CMIDX_ODTIP.TAB"
-OUT_DIR = Path("themis_phase2_output")
+
+# Whole-product downloads land here. The pipeline no longer needs them --
+# themis_windows.py fetches just the bytes covering each window over HTTP range
+# requests -- but the path is kept for direct CLI use of this script.
+OUT_DIR = _HERE / "themis_products"
 
 HEADERS = {
     "User-Agent": "THEMIS-lavatube-phase2/1.0",

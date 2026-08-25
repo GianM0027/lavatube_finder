@@ -127,7 +127,7 @@ def _write_crop(source, window: Window, destination: str) -> None:
 
 def cut_pairs(
     annotations: pd.DataFrame,
-    out_dir: str = "data/matched_crops",
+    out_dir: str = "data/optical/matched_pairs",
     negative_category_id: int = 3,
     overlap_fraction: float = 0.0,
     margin: float = 1.2,

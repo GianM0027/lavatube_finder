@@ -4,13 +4,13 @@ papers
 __pycache__
 .env
 lavatube_finder.ipynb
-data
-data/mars_relief_cache_region.json
 to-do
 trade_off.py
-themis_phase2_cache
-themis_phase2_output
-data/mars_relief_cache_region.json
 model/best_model*.pt
 matched_crops_preview.png
-data/mars_relief_cache_region.json
+
+# Datasets are ignored, but the generation code that lives beside them is not.
+data/**
+!data/**/
+!data/**/*.py
+!data/**/*.ipynb
