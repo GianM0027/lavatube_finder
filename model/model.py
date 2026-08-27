@@ -74,7 +74,7 @@ class LavaTubeFinder(nn.Module):
         fusion_dim: int = 512,
         n_classes: int = 3,
         thermal_feat_dim: int = 256,
-        thermal_channels: int = 1,
+        thermal_channels: int = 2,   # brightness temperature + validity mask
         modality: str = "both",
     ):
         super().__init__()
@@ -142,9 +142,12 @@ class LavaTubeFinder(nn.Module):
         """
         static_img: (B, 1, H, W) -> HiRISE crop (~0.5 m/pixel).
                     Required unless modality is "thermal".
-        thermal_seq: (B, T, 1, h, w) -> T THEMIS frames kept at native
+        thermal_seq: (B, T, 2, h, w) -> T THEMIS frames kept at native
                     resolution (~100 m/pixel), so h/w are small (e.g. 32) and
-                    independent of the HiRISE dimensions H/W.
+                    independent of the HiRISE dimensions H/W. Channel 0 is
+                    standardised brightness temperature, channel 1 a validity
+                    mask -- see LandformDataset.thermal_for for why the mask is
+                    a channel rather than a sentinel value.
                     Required unless modality is "optical".
         """
         embeddings = []

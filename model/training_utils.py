@@ -4,7 +4,7 @@ from typing import Dict, Optional
 import numpy as np
 import torch
 import torch.nn as nn
-from torch.utils.data import DataLoader, Subset, random_split
+from torch.utils.data import DataLoader, Subset
 import torch.nn.functional as F
 from tqdm.auto import tqdm
 from sklearn.metrics import precision_recall_fscore_support
@@ -297,6 +297,11 @@ def pad_collate_fn(batch):
     """
     Pads the HiRISE images' spatial dimensions (H, W) across a batch on CPU.
 
+    LandformDataset resamples every crop to a fixed ``out_px``, so in normal use
+    there is nothing to pad and this is a plain stack. It is kept because it
+    still handles the 1x1 placeholder returned under ``load_optical=False``, and
+    because it costs nothing.
+
     Thermal frames are NOT padded to the image size: they are THEMIS windows at
     native ~100 m/pixel resolution with their own fixed, much smaller shape, so
     they are stacked as-is.
@@ -327,10 +332,14 @@ def group_aware_split(groups, labels, val_split=0.2, seed=42):
     Split indices so that every sample sharing a group stays on one side.
 
     Groups are assigned per class, so the class balance of the validation set
-    still matches the dataset even though group sizes vary a lot (a
-    DeepLandforms landform carries ~4.7 images, a plain-terrain crop exactly 1).
+    still matches the dataset even though group sizes vary (a landform carries
+    its 0.5/1/2/3/5 m/pixel replicas, a product carries several landforms).
     Within a class, groups are shuffled and taken until the target share of that
     class's samples is reached.
+
+    Prefer :func:`cross_validate` for anything reported: with 159 product-level
+    groups a single 20% hold-out leaves ~32 groups, and the fold-to-fold spread
+    is wider than most effects worth measuring.
     """
     rng = np.random.default_rng(seed)
 
@@ -338,13 +347,15 @@ def group_aware_split(groups, labels, val_split=0.2, seed=42):
     for idx, group in enumerate(groups):
         members.setdefault(group, []).append(idx)
 
-    # A group must stay intact even when it spans classes -- a handful of sites
-    # carry different labels across repeat observations. Such a group is
-    # stratified under its majority class, but never split.
+    # A group must stay intact even when it spans classes -- with product-level
+    # grouping most groups do. Such a group is stratified under its majority
+    # class, but never split. Ties are broken by the lowest class id rather than
+    # by dict order, so the split does not depend on row ordering.
     by_class = {}
     for group, idxs in members.items():
         counts = Counter(labels[i] for i in idxs)
-        majority = counts.most_common(1)[0][0]
+        top = max(counts.values())
+        majority = min(label for label, n in counts.items() if n == top)
         by_class.setdefault(majority, []).append(idxs)
 
     train_idx, val_idx = [], []
@@ -369,24 +380,45 @@ def group_aware_split(groups, labels, val_split=0.2, seed=42):
 
 
 def loaders_from_indices(
-    image_dataset, train_idx, val_idx, batch_size=2, num_workers=2
+    train_dataset, val_dataset, train_idx, val_idx, batch_size=2, num_workers=2
 ):
-    """Build train/val loaders for an explicit index split."""
-    train_loader = DataLoader(
-        Subset(image_dataset, train_idx),
+    """
+    Build train/val loaders for an explicit index split.
+
+    Two dataset objects, not one, because augmentation has to differ between
+    them: the training copy redraws its crop offset and dihedral transform on
+    every access, the validation copy does not. Both must be built over the
+    *same* annotation table so the indices mean the same thing on each side.
+    """
+    if len(train_dataset) != len(val_dataset):
+        raise ValueError(
+            "train and val datasets must cover the same annotation table "
+            f"({len(train_dataset)} vs {len(val_dataset)} rows)"
+        )
+
+    # Windows spawns a fresh interpreter per worker rather than forking, so a
+    # loader rebuilt every epoch pays that cost every epoch: a 5-fold, 8-epoch,
+    # 3-modality ablation would spawn ~240 of them, and one of those spawns
+    # failing to allocate is what killed an earlier run. persistent_workers
+    # keeps them alive for the life of the loader instead.
+    #
+    # num_workers=0 is the safe default here regardless: the GPU is the
+    # bottleneck at 384 px, so the workers buy very little.
+    common = dict(
         batch_size=batch_size,
-        shuffle=True,
         collate_fn=pad_collate_fn,
         num_workers=num_workers,
         pin_memory=True,
     )
+    if num_workers > 0:
+        common["persistent_workers"] = True
+        common["prefetch_factor"] = 2
+
+    train_loader = DataLoader(
+        Subset(train_dataset, train_idx), shuffle=True, **common
+    )
     val_loader = DataLoader(
-        Subset(image_dataset, val_idx),
-        batch_size=batch_size,
-        shuffle=False,
-        collate_fn=pad_collate_fn,
-        num_workers=num_workers,
-        pin_memory=True,
+        Subset(val_dataset, val_idx), shuffle=False, **common
     )
     return train_loader, val_loader
 
@@ -395,12 +427,12 @@ def group_kfold_indices(groups, labels, n_splits=5, seed=42):
     """
     Stratified, group-aware folds.
 
-    Every sample sharing a group stays in one fold, so resolution replicas and
-    the two halves of a matched crop pair cannot straddle a split, while class
-    balance is held across folds. Worth preferring over a single hold-out here:
-    the matched dataset has only ~229 independent groups, so one 20% split
-    leaves ~45 validation groups and the noise can swamp the effect being
-    measured.
+    Every sample sharing a group stays in one fold, so resolution replicas,
+    repeat observations and (at product level) everything sharing an
+    acquisition cannot straddle a split, while class balance is held across
+    folds. Worth preferring over a single hold-out here: there are only ~312
+    landform-level groups and ~159 product-level ones, so one 20% split leaves
+    32-62 validation groups and the noise can swamp the effect being measured.
     """
     from sklearn.model_selection import StratifiedGroupKFold
 
@@ -410,8 +442,82 @@ def group_kfold_indices(groups, labels, n_splits=5, seed=42):
     return list(splitter.split(np.zeros(len(labels)), labels, groups))
 
 
+@torch.no_grad()
+def collect_predictions(model, dataloader, device):
+    """
+    Class probabilities over a loader, for a model that is already trained.
+
+    :return: ``(targets, probabilities)`` as numpy arrays, shapes ``(N,)`` and
+        ``(N, n_classes)``. Row order follows the loader, so pass a loader built
+        with ``shuffle=False``.
+    """
+    model.eval()
+    model.to(device)
+
+    use_optical, use_thermal = _active_modalities(model)
+    all_targets, all_probs = [], []
+
+    for static_img, thermal_seq, targets in dataloader:
+        static_img = static_img.to(device, non_blocking=True) if use_optical else None
+        thermal_seq = thermal_seq.to(device, non_blocking=True) if use_thermal else None
+
+        with torch.amp.autocast(device_type=device.type, enabled=(device.type == "cuda")):
+            logits = model(static_img, thermal_seq)
+
+        all_probs.append(torch.softmax(logits.float(), dim=1).cpu().numpy())
+        all_targets.append(targets.numpy())
+
+    return np.concatenate(all_targets), np.concatenate(all_probs)
+
+
+def binary_report(targets, probabilities, positive=1, label="skylight", verbose=True):
+    """
+    Detector-style readout for the Type-1-versus-rest task.
+
+    Macro F1 averages over both classes and so is flattered by the majority
+    class. What matters for a detector is what happens to the class being
+    detected, so this reports precision, recall and F1 for the positive class
+    alone, plus average precision -- the area under the precision/recall curve,
+    which is threshold-free and is the right summary for an imbalanced
+    detection problem (here 625 skylights against 1221 other pits).
+
+    :param probabilities: ``(N, 2)`` from :func:`collect_predictions`, or a
+        ``(N,)`` vector of positive-class scores.
+    :return: dict of metrics.
+    """
+    from sklearn.metrics import (average_precision_score, confusion_matrix,
+                                 precision_recall_fscore_support)
+
+    targets = np.asarray(targets)
+    probabilities = np.asarray(probabilities)
+    scores = probabilities if probabilities.ndim == 1 else probabilities[:, positive]
+    predictions = (scores >= 0.5).astype(int)
+
+    precision, recall, f1, _ = precision_recall_fscore_support(
+        targets, predictions, average="binary", pos_label=positive, zero_division=0
+    )
+    result = {
+        "precision": float(precision),
+        "recall": float(recall),
+        "f1": float(f1),
+        "average_precision": float(average_precision_score(targets == positive, scores)),
+        "accuracy": float((predictions == targets).mean()),
+        "positive_rate": float((targets == positive).mean()),
+    }
+
+    if verbose:
+        print(f"{label}: precision {result['precision']:.3f}  "
+              f"recall {result['recall']:.3f}  F1 {result['f1']:.3f}")
+        print(f"average precision {result['average_precision']:.3f}  "
+              f"(a constant 'always {label}' scores {result['positive_rate']:.3f})")
+        print("confusion (rows=true, cols=pred):")
+        print(confusion_matrix(targets, predictions))
+
+    return result
+
+
 def cross_validate(
-    image_dataset,
+    dataset_factory,
     model_factory,
     criterion,
     optimizer_factory,
@@ -419,29 +525,58 @@ def cross_validate(
     device,
     n_splits=5,
     batch_size=4,
-    num_workers=2,
+    num_workers=0,
     seed=42,
     select_by="val_f1",
+    group_level="product",
+    collect_oof=False,
     verbose=True,
 ):
     """
     Run group-aware stratified k-fold and report per-fold and aggregate metrics.
 
+    :param dataset_factory: callable taking ``augment: bool`` and returning a
+        dataset over the full annotation table. Called twice -- once augmented
+        for training, once not for validation -- so the two sides differ only in
+        augmentation, never in content.
     :param model_factory: zero-argument callable returning a fresh model. A new
         model per fold is essential -- reusing one would carry weights (and the
         previous fold's validation data) across folds.
     :param optimizer_factory: callable taking the model, returning an optimizer.
     :param select_by: history key whose best epoch is reported for each fold.
-    :return: (per_fold DataFrame, history list)
+        Note that picking the best epoch *on the validation fold* is mildly
+        optimistic; it is fine for comparing modalities against each other,
+        which is what this function is for, but a headline number should come
+        from a fixed epoch budget or a held-out third split.
+    :param group_level: ``"product"`` (honest) or ``"landform"``. See
+        ``LandformDataset.group_keys``.
+    :param collect_oof: also return out-of-fold predictions. Every sample is
+        predicted exactly once, by the fold that did not train on it, giving one
+        honest confusion matrix over the whole data set rather than five partial
+        ones. Taken from each fold's **final** epoch, not its best, so it does
+        not inherit the optimism noted above.
+    :return: ``(per_fold DataFrame, history list)``, or
+        ``(per_fold, histories, targets, probabilities)`` when ``collect_oof``.
     """
     import pandas as pd
 
+    train_dataset = dataset_factory(True)
+    val_dataset = dataset_factory(False)
+
+    groups = val_dataset.group_keys(level=group_level)
     folds = group_kfold_indices(
-        image_dataset.group_keys(), image_dataset.img_labels, n_splits, seed
+        groups, val_dataset.img_labels, n_splits, seed
     )
+
+    if verbose:
+        print(f"{len(val_dataset)} samples in {len(set(groups))} "
+              f"{group_level}-level groups")
 
     metrics = ["val_loss", "val_acc", "val_precision", "val_recall", "val_f1"]
     rows, histories = [], []
+
+    oof_targets = np.zeros(len(val_dataset), dtype=int)
+    oof_probs = None
 
     for fold, (train_idx, val_idx) in enumerate(folds, start=1):
         if verbose:
@@ -449,7 +584,7 @@ def cross_validate(
                   f"({len(train_idx)} train / {len(val_idx)} val) ---")
 
         train_loader, val_loader = loaders_from_indices(
-            image_dataset, train_idx, val_idx, batch_size, num_workers
+            train_dataset, val_dataset, train_idx, val_idx, batch_size, num_workers
         )
 
         model = model_factory()
@@ -470,6 +605,14 @@ def cross_validate(
                      **{m: history[m][best] for m in metrics}})
         histories.append(history)
 
+        if collect_oof:
+            # val_loader does not shuffle, so its row order is val_idx order.
+            fold_targets, fold_probs = collect_predictions(model, val_loader, device)
+            if oof_probs is None:
+                oof_probs = np.zeros((len(val_dataset), fold_probs.shape[1]))
+            oof_targets[val_idx] = fold_targets
+            oof_probs[val_idx] = fold_probs
+
     per_fold = pd.DataFrame(rows).set_index("fold")
 
     if verbose:
@@ -478,48 +621,49 @@ def cross_validate(
         summary = per_fold[metrics].agg(["mean", "std"])
         print("\n" + summary.round(4).to_string())
 
+    if collect_oof:
+        return per_fold, histories, oof_targets, oof_probs
+
     return per_fold, histories
 
 
 def create_dataloaders(
-    image_dataset, batch_size=2, val_split=0.2, num_workers=2, group_aware=True
+    dataset_factory,
+    batch_size=2,
+    val_split=0.2,
+    num_workers=2,
+    group_aware=True,
+    group_level="product",
+    seed=42,
 ):
-    if group_aware and hasattr(image_dataset, "group_keys"):
+    """
+    Single hold-out split, for quick looks only.
+
+    :param dataset_factory: callable taking ``augment: bool``, as in
+        :func:`cross_validate`.
+    :param group_aware: when cleared, splits rows at random. That leaks
+        resolution replicas of the same landform across the split (measured
+        previously: 73.8% of validation images had a copy in training) and is
+        kept only to reproduce that number, never to report a result.
+    """
+    train_dataset = dataset_factory(True)
+    val_dataset = dataset_factory(False)
+
+    if group_aware and hasattr(val_dataset, "group_keys"):
         train_idx, val_idx = group_aware_split(
-            image_dataset.group_keys(), image_dataset.img_labels, val_split
+            val_dataset.group_keys(level=group_level),
+            val_dataset.img_labels,
+            val_split,
+            seed,
         )
-        train_dataset = Subset(image_dataset, train_idx)
-        val_dataset = Subset(image_dataset, val_idx)
     else:
-        # Random row split: leaks rescaled copies of the same landform across
-        # the split. Kept only for comparison against earlier results.
-        val_size = int(len(image_dataset) * val_split)
-        train_size = len(image_dataset) - val_size
+        rng = np.random.default_rng(seed)
+        order = rng.permutation(len(val_dataset))
+        cut = int(len(val_dataset) * val_split)
+        val_idx, train_idx = sorted(order[:cut]), sorted(order[cut:])
 
-        train_dataset, val_dataset = random_split(
-            image_dataset,
-            [train_size, val_size],
-            generator=torch.Generator().manual_seed(42)
-        )
-
-    train_loader = DataLoader(
-        train_dataset,
-        batch_size=batch_size,
-        shuffle=True,
-        collate_fn=pad_collate_fn,
-        num_workers=num_workers,
-        pin_memory=True  # Enables fast CPU->GPU transfer
+    return loaders_from_indices(
+        train_dataset, val_dataset, train_idx, val_idx, batch_size, num_workers
     )
-
-    val_loader = DataLoader(
-        val_dataset,
-        batch_size=batch_size,
-        shuffle=False,
-        collate_fn=pad_collate_fn,
-        num_workers=num_workers,
-        pin_memory=True
-    )
-
-    return train_loader, val_loader
 
 

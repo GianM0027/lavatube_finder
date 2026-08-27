@@ -175,13 +175,21 @@ def query_point(lat: float, lon_user: float, timeout=45) -> dict:
 
 
 def clean_product_id(pid: str | None) -> str:
+    """
+    Strip the archive suffix from an IRPBT product id.
+
+    An observation id is ``I`` plus eight characters. In the primary mission
+    those eight are digits (``I88015002PBT``); once the orbit counter passed
+    99999 the leading digit became a letter, so extended-mission products read
+    ``IA1255015PBT``. Matching only ``I\\d{8}`` left those ids with their
+    ``PBT`` suffix attached, which every downstream lookup then failed on.
+    """
     if not pid:
         return ""
 
     pid = pid.strip().upper()
 
-    # IRPBT product IDs may appear as I########PBT.
-    m = re.match(r"(I\d{8})(?:PBT)?", pid)
+    m = re.match(r"(I[0-9A-Z]\d{7})(?:PBT)?", pid)
     return m.group(1) if m else pid
 
 

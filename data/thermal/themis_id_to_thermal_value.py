@@ -93,10 +93,31 @@ def download(url: str, dest: Path, timeout=(10, 120), retries=3):
     raise RuntimeError(f"Could not download {url}\n{last}")
 
 
+#: A THEMIS observation id is ``I`` plus eight characters. In the primary
+#: mission those eight are all digits (``I88015002``). Once the orbit counter
+#: passed 99999 the leading digit was replaced by a letter, so extended-mission
+#: products read ``IA1255015``, ``IB…`` and so on. Matching only ``I\d{8}``
+#: silently rejected every extended-mission product: 161 of the 508 observations
+#: covering these sites, 32% of the archive available here.
+_OBSERVATION_ID = re.compile(r"I[0-9A-Z]\d{7}", re.I)
+
+#: The image filename carrying such an id, as written in the ASU index.
+_IMG_NAME = re.compile(r"I[0-9A-Z]\d{7}PBT\.IMG", re.I)
+
+
 def normalize_id(obs_id: str) -> str:
-    m = re.search(r"I\d{8}", obs_id.strip(), re.I)
+    """
+    Extract the canonical observation id from a product name.
+
+    Accepts the id on its own or with an archive suffix (``IA1255015PBT``),
+    in either case returning the nine-character id in upper case.
+    """
+    m = _OBSERVATION_ID.search(obs_id.strip())
     if not m:
-        raise ValueError("Use a THEMIS observation ID such as I88015002")
+        raise ValueError(
+            f"{obs_id!r} does not contain a THEMIS observation ID "
+            "such as I88015002 or IA1255015"
+        )
     return m.group(0).upper()
 
 
@@ -136,9 +157,12 @@ def find_product(index_path: Path, obs_id: str):
             if not any(v == "PBT" or "PBT" in v for v in upper):
                 continue
 
-            # Find field that looks like IMG filename.
+            # Find field that looks like IMG filename. The id shape has to match
+            # _OBSERVATION_ID, extended-mission products included -- hard-coding
+            # eight digits here silently dropped every ``IA…PBT.IMG`` even once
+            # the id itself had been accepted.
             img_name = next(
-                (v for v in vals if re.fullmatch(r"I\d{8}PBT\.IMG", v, re.I)),
+                (v for v in vals if _IMG_NAME.fullmatch(v)),
                 None,
             )
 
