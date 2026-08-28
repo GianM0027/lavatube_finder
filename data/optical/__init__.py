@@ -1,0 +1,1 @@
+"""Optical (HiRISE) crop generation."""

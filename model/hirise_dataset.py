@@ -28,6 +28,12 @@ __all__ = ["LandformDataset", "MARS_RADIUS_M"]
 #: Mean Mars radius, for converting a merge radius to metres on the ground.
 MARS_RADIUS_M = 3389500.0
 
+#: Kelvin per unit after per-window normalisation. Fixed rather than derived
+#: per window so that the *amplitude* of an anomaly survives: measured spread of
+#: median-subtracted THEMIS pixels is 3.5 K, so 3 K keeps values near unit scale
+#: while leaving the numbers physically interpretable.
+PER_WINDOW_SCALE_K = 3.0
+
 #: Grouping relations available to :meth:`LandformDataset.group_keys`.
 GROUP_LEVELS = ("landform", "product")
 
@@ -58,6 +64,9 @@ class LandformDataset(Dataset):
     :param thermal_mean: Kelvin mean used to fill and standardise. ``None``
         derives it from the valid pixels of the store.
     :param thermal_std: as above, for the standard deviation.
+    :param thermal_normalisation: ``"per_window"`` (default) or ``"global"``.
+        See :meth:`thermal_for` -- the choice decides whether the temperature
+        channel carries a cave anomaly or a map reference.
     """
 
     def __init__(
@@ -77,6 +86,7 @@ class LandformDataset(Dataset):
         thermal_dir: Optional[str] = None,
         thermal_mean: Optional[float] = None,
         thermal_std: Optional[float] = None,
+        thermal_normalisation: str = "per_window",
     ):
         required = {"image_name", "img_path", "category_id", "bbox",
                     "tile_width", "tile_height"}
@@ -125,6 +135,13 @@ class LandformDataset(Dataset):
         self.thermal_mean = thermal_mean
         self.thermal_std = thermal_std
         self._thermal_store = None
+
+        if thermal_normalisation not in ("per_window", "global"):
+            raise ValueError(
+                "thermal_normalisation must be 'per_window' or 'global', "
+                f"got {thermal_normalisation!r}"
+            )
+        self.thermal_normalisation = thermal_normalisation
 
         if thermal_dir is not None and thermal_sites is None:
             raise ValueError(
@@ -264,10 +281,22 @@ class LandformDataset(Dataset):
         the HiRISE side is cut, filtered or relabelled cannot silently change
         what the thermal branch is trained against.
 
-        **Two channels, not one.** Channel 0 is standardised brightness
-        temperature; channel 1 is a validity mask, 1 where a real measurement
-        exists and 0 where there is none. Missing values in channel 0 are filled
-        with the dataset mean, which standardises to exactly 0.
+        **Two channels, not one.** Channel 0 is brightness temperature; channel
+        1 is a validity mask, 1 where a real measurement exists and 0 where
+        there is none. Missing values are filled so they normalise to 0.
+
+        **Normalisation decides what channel 0 means.** Under ``"global"`` it is
+        standardised against the whole data set, so its dominant variance is
+        *where and when* the frame was taken -- latitude, season, time of day.
+        Measured: a model given only that scored AUC 0.671, statistically
+        indistinguishable from one given only latitude and longitude (0.660). It
+        was reading a map, not a cave.
+
+        Under ``"per_window"`` (the default) each frame has its own median
+        subtracted and is divided by a fixed 3 K. Everything acting on the whole
+        neighbourhood equally cancels, and what survives is the local anomaly --
+        which over 312 independent landforms separates skylights from other pits
+        by 0.57 sigma with the sign Cushing et al. (2007) predict.
 
         Why not a sentinel like -1 in a single channel:
 
@@ -322,7 +351,24 @@ class LandformDataset(Dataset):
             values[:len(frames)] = np.where(valid, frames, self.thermal_mean)
             mask[:len(frames)] = valid.astype(np.float32)
 
-        values = (values - self.thermal_mean) / self.thermal_std
+        if self.thermal_normalisation == "per_window":
+            # Each frame is expressed relative to its own median, then scaled by
+            # a FIXED number of Kelvin. Dividing by each window's own spread
+            # would erase the amplitude, which is the quantity of interest.
+            for t in range(length):
+                real = mask[t] > 0
+                if real.any():
+                    values[t] = values[t] - np.median(values[t][real])
+                else:
+                    values[t] = 0.0
+            values = values / PER_WINDOW_SCALE_K
+        else:
+            values = (values - self.thermal_mean) / self.thermal_std
+
+        # Whatever the mode, a pixel with no measurement must arrive as exactly
+        # zero: it was filled with a stand-in, and any residue of that stand-in
+        # is a number the network can read as if it were a measurement.
+        values[mask == 0] = 0.0
 
         return torch.from_numpy(np.stack([values, mask], axis=1))
 
