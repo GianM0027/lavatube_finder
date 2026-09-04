@@ -1,4 +1,4 @@
-# End-to-End Multimodal Detection of Lunar and Martian Lava Tubes
+# End-to-End Multimodal Detection of Martian Lava Tubes
 
 ## Overview
 The identification of lava tubes and subsurface cavities on the Moon and Mars is a strategic priority for the sustainability of future long-term planetary exploration. These natural structures provide shielding from cosmic radiation and micrometeoroid impacts, making them suitable candidates for human habitats and storage.
