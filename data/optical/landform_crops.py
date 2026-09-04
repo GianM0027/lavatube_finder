@@ -13,8 +13,18 @@ two shortcuts that have nothing to do with morphology:
   ratio 3.9), so the raster dimensions leak the class: the median annotated
   diameter is 155 m for Type-1, 512 m for Type-4 and 779 m for Type-2.
 
-What this does
---------------
+Two crop policies
+-----------------
+``plan_crop`` (**relative**, ``context`` x the annotation) removes the size cue
+from the raster dimensions but reintroduces it as a *resampling* artefact once
+the crop is resized to a fixed pixel side -- see ``plan_crop_fixed`` for the
+measurement. ``plan_crop_fixed`` (**fixed footprint**) instead covers the same
+ground extent every time and pads where the tile runs out. Report both: the gap
+between them is how much of an optical score is morphology and how much is the
+pipeline.
+
+What the relative policy does
+-----------------------------
 One crop per annotation, from every tile, with:
 
 * **side proportional to the landform** (``context`` x its bounding box), so the
@@ -25,11 +35,6 @@ One crop per annotation, from every tile, with:
 * **no rejection**. The side is clamped to the tile, and DeepLandforms tiles
   always contain their own landform (smallest measured tile/landform ratio
   1.38), so every one of the 1846 annotations yields a crop.
-
-Absolute scale is not thrown away, it is moved out of the pixels: the ground
-sampling distance of each crop is recorded in the annotation table, so a model
-can be given it explicitly and, more usefully, can be trained without it to show
-whether morphology alone carries the class.
 
 The bounding box is used rather than the segmentation polygon because in this
 data set they agree: ``bbox`` is exactly the tight bound of the polygon
@@ -46,6 +51,8 @@ import numpy as np
 __all__ = [
     "CropPlan",
     "plan_crop",
+    "plan_crop_fixed",
+    "padded_fraction",
     "read_crop",
     "landform_lonlat",
     "annotation_table",
@@ -85,6 +92,130 @@ def _offset_range(box_lo: float, box_len: float, side: int, extent: int) -> Tupl
         return int(round(centred)), int(round(centred))
 
     return int(np.ceil(lo)), int(np.floor(hi))
+
+
+def plan_crop_fixed(
+    tile_width: int,
+    tile_height: int,
+    bbox: Sequence[float],
+    resolution_mpp: float,
+    footprint_m: float = 960.0,
+    rng: Optional[np.random.Generator] = None,
+    jitter_fraction: float = 0.2,
+) -> CropPlan:
+    """
+    Plan one square crop of a **fixed extent on the ground**, in tile pixels.
+
+    Why this exists
+    ---------------
+    :func:`plan_crop` sizes the window as a multiple of the annotation and the
+    dataset then resamples it to a fixed pixel side. That removes the landform's
+    size from the raster dimensions, but it puts it straight back into the
+    *pixels*: the resampling factor becomes a function of the landform's size,
+    and landform size is strongly class-dependent. Measured over the 1846
+    annotations, ``context=1.75`` gives a median effective ground sampling
+    distance of 0.71 m/pixel for Type-1 against 3.45 m/pixel for Type-2, so
+    Type-1 crops arrive upsampled and smooth while Type-2 crops arrive
+    downsampled and sharp. That difference alone -- with no morphology at all --
+    separates Type-1 from the rest at 80.9% accuracy under product-level
+    grouping, against a 66.1% majority, and gradient statistics of the crop
+    recover it with out-of-group :math:`R^2 = 0.59`.
+
+    It is an artefact of the pipeline, not a property of Mars, and it would not
+    survive a detector sliding over a native-resolution HiRISE product.
+
+    What this does instead
+    ----------------------
+    Every crop covers the same ``footprint_m`` metres of ground. Paired with a
+    fixed output ground sampling distance in the dataset, the resampling factor
+    then depends only on the tile's own ``resolution_mpp`` -- which is the
+    DeepLandforms replica axis and is very nearly balanced across classes
+    (Type-1 is exactly 20% at each of 0.5/1/2/3/5 m/pixel, and
+    ``resolution_mpp`` alone predicts the class at exactly the majority rate).
+
+    The landform's *apparent* size now varies from crop to crop again. That is
+    deliberate and it is not the same thing: apparent size at a fixed scale is a
+    real physical cue that a real detector would also have, so it can be
+    disclosed and ablated rather than accidentally manufactured.
+
+    What it costs
+    -------------
+    A fixed footprint does not always fit the tile, and DeepLandforms tiles are
+    themselves sized in proportion to their landform, so the padded fraction is
+    class-dependent: at 960 m it averages 0.16 for Type-1 against 0.05 for
+    Type-4 and 0.03 for Type-2. Padding alone predicts the class at 70.0%,
+    against 80.9% for the effective GSD it replaces. It is not zero, so it is
+    kept as a named control -- see ``model.baselines.geometry_features``.
+
+    How the offset is drawn, and why not the way ``plan_crop`` draws it
+    ------------------------------------------------------------------
+    ``plan_crop`` picks uniformly from the offsets that keep the whole
+    annotation inside the window. Carried over to a fixed footprint that rule
+    becomes class-dependent, because a large landform nearly fills the window
+    and so has almost nowhere to move: measured at 960 m, median available
+    jitter would be 0.63 of the side for Type-1 against 0.18 for Type-2, with
+    26% of Type-2 annotations unable to move at all. That is the positional
+    shortcut handed straight back, class-dependently -- the same failure the
+    ``context`` factor was tuned to avoid.
+
+    So the fixed policy jitters the window *centre* by a fixed fraction of the
+    footprint instead, uniformly and without reference to the annotation's size.
+    Every sample gets exactly the same amount of positional augmentation, so the
+    jitter cannot encode anything. The price is that a landform larger than
+    ``(1 - 2 * jitter_fraction) * footprint_m`` can have an edge pushed out of
+    frame -- which is what a detector scanning at a fixed scale would also see,
+    and is therefore a property of the task rather than of the pipeline.
+
+    :param tile_width: Tile width in pixels.
+    :param tile_height: Tile height in pixels.
+    :param bbox: ``[x, y, w, h]`` of the annotation, in tile pixels.
+    :param resolution_mpp: Ground sampling distance of this tile, in metres.
+    :param footprint_m: Side of the crop on the ground, in metres. 960 m is the
+        default because it is where the padding leak is near its minimum while
+        still containing the whole landform for 100% of Type-1, 95.7% of Type-4
+        and 62.4% of Type-2 annotations. (960 m at 2.5 m/pixel also gives the
+        same 384 px input as the relative policy, so the two cost the same to
+        train.)
+    :param rng: Source of randomness for the offset. ``None`` centres the window
+        on the annotation -- previews only, never training.
+    :param jitter_fraction: Half-width of the centre jitter, as a fraction of
+        the footprint. 0.2 moves the landform centre anywhere in the middle 40%
+        of the frame.
+    :return: The planned window. ``col_off``/``row_off`` may be negative, and
+        the window may extend past the tile; :func:`read_crop` reads boundless
+        and pads with zeros.
+    """
+    box_x, box_y, box_w, box_h = (float(v) for v in bbox)
+
+    side = max(int(round(footprint_m / float(resolution_mpp))), 1)
+
+    # Window centred on the annotation, then displaced by the same amount for
+    # everyone. No clamping to the tile: clamping is what would make the jitter
+    # depend on the tile, and the tile depends on the landform.
+    col_off = box_x + box_w / 2.0 - side / 2.0
+    row_off = box_y + box_h / 2.0 - side / 2.0
+
+    if rng is not None:
+        jitter = int(round(abs(jitter_fraction) * side))
+        if jitter > 0:
+            col_off += int(rng.integers(-jitter, jitter + 1))
+            row_off += int(rng.integers(-jitter, jitter + 1))
+
+    return CropPlan(int(round(col_off)), int(round(row_off)), side)
+
+
+def padded_fraction(
+    plan: CropPlan, tile_width: int, tile_height: int
+) -> float:
+    """
+    Share of a planned crop's area that falls outside the tile and is padded.
+
+    Class-dependent under the fixed-footprint policy, so it is measured rather
+    than assumed. Feeds ``model.baselines.geometry_features``.
+    """
+    inside_w = max(0, min(plan.col_off + plan.side, tile_width) - max(plan.col_off, 0))
+    inside_h = max(0, min(plan.row_off + plan.side, tile_height) - max(plan.row_off, 0))
+    return 1.0 - (inside_w * inside_h) / float(plan.side ** 2)
 
 
 def plan_crop(

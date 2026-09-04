@@ -38,6 +38,7 @@ __all__ = [
     "find_observations",
     "spread_over_local_time",
     "extract_windows",
+    "frame_times",
 ]
 
 #: Extraction size in THEMIS pixels (~100 m each). A superset: smaller windows
@@ -220,3 +221,90 @@ def extract_windows(
         print(f"  frames per site: {counts.value_counts().sort_index().to_dict()}")
 
     return manifest
+
+
+def frame_times(
+    manifest_path: str = "data/thermal/themis_data/window_manifest.json",
+    observations_path: str = "data/thermal/themis_data/observations.csv",
+) -> dict:
+    """
+    Mars local solar time and season for every stored frame, keyed by site.
+
+    Why the model needs this
+    ------------------------
+    ``spread_over_local_time`` uses local solar time to *choose* and *order*
+    frames, and then throws it away: what reaches the network is
+    ``(T, 2, k, k)`` -- temperature and a validity mask -- with no clock. But
+    Cushing et al. (2007) identify a cave-connected pit by a *diurnal
+    amplitude*, which is a temperature difference divided by a time difference.
+    A model with no time axis cannot compute one, and slot 0 is 03h at one site
+    and 07h at the next, so the temporal convolution is not even comparing like
+    with like.
+
+    That it matters is measurable in the stored windows. Splitting the
+    centre-minus-annulus contrast by local time band, the separation between
+    Type-1 and the rest is not merely weaker at some hours -- the *mechanism
+    changes sign*:
+
+    ========================  ==========  ==========  ==========
+    band                      Type-1      Type-2      Type-4
+    ========================  ==========  ==========  ==========
+    02-06 h (pre-dawn)        +1.27 K     +0.75 K     -0.27 K
+    06-10 h (dawn)            +0.59 K     +0.56 K     -1.09 K
+    14-18 h (afternoon)       -0.44 K     -3.53 K     -1.38 K
+    18-22 h (dusk)            +0.16 K     -0.51 K     -0.62 K
+    ========================  ==========  ==========  ==========
+
+    Pre-dawn is Cushing's regime: a warm, insulated skylight against cold
+    ground. The afternoon column is the opposite mechanism -- a large bowl-shaped
+    Type-2 pit is 3.5 K *cold* at 14-18 h, which is shadow, i.e. the same
+    morphology the optical branch already reads, sampled at 100 m. Averaging the
+    two regimes into one sequence without telling the model which is which
+    cancels part of the signal.
+
+    Encoding
+    --------
+    Angles are returned as raw values; ``LandformDataset`` turns them into
+    ``sin``/``cos`` pairs so that 23:30 and 00:30 are adjacent rather than a
+    24-hour jump.
+
+    Frame order matches the ``(T, k, k)`` order of the stored ``.npy``: both
+    come from the same loop in :func:`extract_windows`.
+
+    :param manifest_path: ``window_manifest.json``, which carries local solar
+        time per frame.
+    :param observations_path: ``observations.csv``, joined on ``observation_id``
+        for solar longitude, which the manifest does not record. Missing or
+        unmatched, season simply comes back as NaN and the dataset encodes it as
+        absent.
+    :return: ``{site_id: [(lmst_hours, solar_longitude_deg), ...]}``.
+    """
+    if not os.path.exists(manifest_path):
+        return {}
+
+    with open(manifest_path) as handle:
+        manifest = json.load(handle)
+
+    season = {}
+    if os.path.exists(observations_path):
+        observations = pd.read_csv(observations_path)
+        if {"observation_id", "solar_longitude_deg"}.issubset(observations.columns):
+            season = (
+                observations.drop_duplicates("observation_id")
+                .set_index("observation_id")["solar_longitude_deg"]
+                .to_dict()
+            )
+
+    times = {}
+    for entry in manifest:
+        rows = []
+        for frame in entry.get("frames", []):
+            hour = frame.get("mars_lmst_decimal_hours")
+            solar_longitude = season.get(frame.get("observation_id"), np.nan)
+            rows.append((
+                float(hour) if hour is not None else np.nan,
+                float(solar_longitude) if solar_longitude is not None else np.nan,
+            ))
+        times[entry["site_id"]] = rows
+
+    return times

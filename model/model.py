@@ -1,6 +1,10 @@
+from typing import Optional
+
 import torch
 import torch.nn as nn
 from torchvision.models import resnet18, ResNet18_Weights
+
+from model.landform_dataset import THERMAL_TIME_DIM
 
 
 class ThermalTCNBlock(nn.Module):
@@ -66,13 +70,38 @@ class ThermalEncoder(nn.Module):
 
     #: Radii in THEMIS pixels. The centre disc covers the landform; the annulus
     #: samples undisturbed ground 500-900 m out, clear of the pit and its rim.
+    #:
+    #: These are defaults, overridable per instance. The pointing was checked
+    #: rather than assumed: sweeping a common offset of the whole mask pair over
+    #: +/-4 px, the class separation is maximal at zero offset and decays to
+    #: nothing by 4 px, and the mean radial profile of the anomaly peaks in the
+    #: innermost ring for all three classes. The windows are on target.
+    #:
+    #: The disc is, if anything, too *large*. Separation between Type-1 and the
+    #: rest, with the product-level Mann-Whitney p beside it:
+    #: 1.5 px -> +1.31 K (p = 0.007), 2.0 px -> +1.12 K (p = 0.021),
+    #: 3.0 px -> +0.86 K (p = 0.096). 1.5 px is about the median Type-1
+    #: diameter, 155 m. The default is left at 2.0 so it does not silently
+    #: change an ablation; pass ``centre_radius=1.5`` to take the improvement.
     CENTRE_RADIUS = 2.0
     ANNULUS_INNER = 5.0
     ANNULUS_OUTER = 9.0
 
     def __init__(self, in_channels: int = 2, out_dim: int = 256,
-                 window: int = 32):
+                 window: int = 32, centre_radius: Optional[float] = None,
+                 annulus_inner: Optional[float] = None,
+                 annulus_outer: Optional[float] = None):
         super().__init__()
+
+        self.centre_radius = (
+            self.CENTRE_RADIUS if centre_radius is None else float(centre_radius)
+        )
+        self.annulus_inner = (
+            self.ANNULUS_INNER if annulus_inner is None else float(annulus_inner)
+        )
+        self.annulus_outer = (
+            self.ANNULUS_OUTER if annulus_outer is None else float(annulus_outer)
+        )
         self.features = nn.Sequential(
             nn.Conv2d(in_channels, 32, kernel_size=3, padding=1),
             nn.BatchNorm2d(32),
@@ -89,22 +118,20 @@ class ThermalEncoder(nn.Module):
         self.register_buffer("centre", self._disc(window), persistent=False)
         self.register_buffer("annulus", self._ring(window), persistent=False)
 
-    @classmethod
-    def _grid(cls, window: int) -> torch.Tensor:
+    @staticmethod
+    def _grid(window: int) -> torch.Tensor:
         centre = (window - 1) / 2.0
         ys, xs = torch.meshgrid(torch.arange(window), torch.arange(window),
                                 indexing="ij")
         return torch.hypot(ys - centre, xs - centre)
 
-    @classmethod
-    def _disc(cls, window: int) -> torch.Tensor:
-        return (cls._grid(window) <= cls.CENTRE_RADIUS).float()
+    def _disc(self, window: int) -> torch.Tensor:
+        return (self._grid(window) <= self.centre_radius).float()
 
-    @classmethod
-    def _ring(cls, window: int) -> torch.Tensor:
-        radius = cls._grid(window)
-        return ((radius >= cls.ANNULUS_INNER)
-                & (radius <= cls.ANNULUS_OUTER)).float()
+    def _ring(self, window: int) -> torch.Tensor:
+        radius = self._grid(window)
+        return ((radius >= self.annulus_inner)
+                & (radius <= self.annulus_outer)).float()
 
     @staticmethod
     def _masked_mean(maps: torch.Tensor, mask: torch.Tensor) -> torch.Tensor:
@@ -145,6 +172,8 @@ class LavaTubeFinder(nn.Module):
         thermal_channels: int = 2,   # brightness temperature + validity mask
         thermal_window: int = 32,    # must match LandformDataset.thermal_window
         modality: str = "both",
+        use_thermal_time: bool = True,
+        centre_radius: Optional[float] = None,
     ):
         super().__init__()
 
@@ -178,13 +207,27 @@ class LavaTubeFinder(nn.Module):
             # 2. DEDICATED THERMAL ENCODER (native THEMIS resolution, not the HiRISE backbone)
             self.thermal_encoder = ThermalEncoder(
                 in_channels=thermal_channels, out_dim=thermal_feat_dim,
-                window=thermal_window,
+                window=thermal_window, centre_radius=centre_radius,
+            )
+
+            # 2b. WHEN each frame was taken, concatenated to its embedding.
+            #
+            # Cushing's discriminant is a diurnal *amplitude* -- a temperature
+            # difference over a time difference -- so a temporal model with no
+            # clock cannot compute it. Worse, frames are packed from the front
+            # in local-time order, so slot 0 is 03h at one site and 07h at the
+            # next: without this the TCN was convolving over frames that are not
+            # comparable. Cleared for the ablation that reproduces the
+            # time-blind model.
+            self.use_thermal_time = use_thermal_time
+            tcn_in_dim = thermal_feat_dim + (
+                THERMAL_TIME_DIM if use_thermal_time else 0
             )
 
             # 3. TEMPORAL 1D TCN HEAD (Processes sequence of X thermal frames)
             self.tcn = nn.Sequential(
                 ThermalTCNBlock(
-                    thermal_feat_dim, tcn_channels, kernel_size=3, dilation=1
+                    tcn_in_dim, tcn_channels, kernel_size=3, dilation=1
                 ),
                 ThermalTCNBlock(
                     tcn_channels, tcn_channels, kernel_size=3, dilation=2
@@ -208,9 +251,12 @@ class LavaTubeFinder(nn.Module):
         self,
         static_img: torch.Tensor = None,
         thermal_seq: torch.Tensor = None,
+        thermal_time: torch.Tensor = None,
     ) -> torch.Tensor:
         """
-        static_img: (B, 1, H, W) -> HiRISE crop (~0.5 m/pixel).
+        static_img: (B, 1, H, W) -> HiRISE crop. Its ground sampling distance is
+                    fixed under crop_policy="fixed_gsd" and landform-dependent
+                    under "relative"; see LandformDataset.
                     Required unless modality is "thermal".
         thermal_seq: (B, T, 2, h, w) -> T THEMIS frames kept at native
                     resolution (~100 m/pixel), so h/w are small (e.g. 32) and
@@ -219,6 +265,12 @@ class LavaTubeFinder(nn.Module):
                     mask -- see LandformDataset.thermal_for for why the mask is
                     a channel rather than a sentinel value.
                     Required unless modality is "optical".
+        thermal_time: (B, T, THERMAL_TIME_DIM) -> when each frame was taken, as
+                    sin/cos of local solar time and solar longitude plus a
+                    known-flag. Concatenated to each frame's embedding just
+                    before the temporal convolution, which is the only place a
+                    clock is of any use. Optional: absent, it is taken as zeros,
+                    which is the time-blind ablation.
         """
         embeddings = []
 
@@ -244,6 +296,17 @@ class LavaTubeFinder(nn.Module):
             flat_thermal = thermal_seq.view(B * T, C, h, w)
             thermal_feats = self.thermal_encoder(flat_thermal)  # (B*T, thermal_feat_dim)
             temporal_vecs = thermal_feats.view(B, T, -1)  # (B, T, thermal_feat_dim)
+
+            if self.use_thermal_time:
+                if thermal_time is None:
+                    # Time-blind: zeros rather than an error, so an older loader
+                    # or a deliberate ablation still runs. The known-flag in
+                    # channel 4 is 0 throughout, so the model can tell the
+                    # difference between "midnight" and "not told".
+                    clock = temporal_vecs.new_zeros(B, T, THERMAL_TIME_DIM)
+                else:
+                    clock = thermal_time.to(temporal_vecs.dtype)
+                temporal_vecs = torch.cat([temporal_vecs, clock], dim=-1)
 
             # Permute to (B, Feature_Dim, Timesteps=T) for 1D Conv
             t_seq = temporal_vecs.permute(0, 2, 1)

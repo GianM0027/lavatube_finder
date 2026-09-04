@@ -32,6 +32,14 @@ Three baselines, in increasing order of what they are allowed to know.
     grouping it degenerates into a product-identity lookup. Running it at both
     levels is the cheapest available demonstration that the grouping matters.
 
+``geometry``
+    The crop *window* and none of its pixels: effective ground sampling distance
+    and padded fraction. Which of the two carries the class depends on the crop
+    policy, and neither is morphology. Under the relative policy this scores
+    80.9% on the binary task; under the fixed-footprint policy, 70.0%. See
+    :func:`geometry_features` -- this is the control the crop policy has to be
+    judged against.
+
 ``availability``
     Thermal *coverage bookkeeping* and no temperature: how many THEMIS frames a
     site received, at which local solar times, how much of each window was
@@ -63,6 +71,7 @@ import pandas as pd
 __all__ = [
     "histogram_features",
     "texture_features",
+    "geometry_features",
     "metadata_features",
     "illumination_features",
     "availability_features",
@@ -147,6 +156,55 @@ def texture_features(image: np.ndarray) -> Dict[str, float]:
         features[f"grad_p{percentile}"] = float(np.percentile(magnitude, percentile))
 
     return features
+
+
+def geometry_features(dataset) -> pd.DataFrame:
+    """
+    What the *crop window* gives away, before anything inside it is looked at.
+
+    The control for the crop policy, in the same spirit as
+    :func:`availability_features` is the control for the thermal claim: a
+    classifier is handed the geometry of the window and none of its pixels, and
+    whatever it scores above the majority class is the size of the shortcut.
+
+    Two columns, and which one bites depends on the policy:
+
+    ``effective_gsd_m``
+        Metres per pixel of the crop as the network receives it. Under
+        ``crop_policy="relative"`` the window is sized as a multiple of the
+        annotation and then resampled to a fixed pixel side, so this is a direct
+        function of the landform's size -- median 0.71 m/pixel for Type-1
+        against 3.45 for Type-2. Type-1 crops arrive upsampled and smooth,
+        Type-2 crops downsampled and sharp, and that difference alone separates
+        the classes at **80.9%** against a 66.1% majority under product-level
+        grouping. Gradient statistics of the crop recover it with out-of-group
+        :math:`R^2 = 0.59`, so it is not hypothetical: it is in the pixels the
+        CNN is reading. Under ``"fixed_gsd"`` it is constant and carries
+        nothing.
+
+    ``padded_fraction``
+        Share of the window that fell outside the tile and was zero-filled.
+        Zero under ``"relative"``, which clamps to the tile. Under
+        ``"fixed_gsd"`` it is what the shortcut collapses to: DeepLandforms
+        tiles are themselves sized in proportion to their landform, so a fixed
+        footprint runs out of tile class-dependently -- 0.15 mean for Type-1
+        against 0.03 and 0.02. On its own it carries **70.0%**.
+
+    So the crop policy does not remove the shortcut, it trades a large unnamed
+    one for a smaller named one: 80.9% becomes 70.0%. Report this baseline
+    beside the CNN under each policy, exactly as ``availability`` is reported
+    beside the multimodal claim.
+
+    :param dataset: a :class:`~model.landform_dataset.LandformDataset`. The
+        geometry is taken from ``dataset.crop_geometry`` rather than recomputed,
+        so it cannot drift from what the crops actually did.
+    :return: one row per sample.
+    """
+    rows = [dataset.crop_geometry(idx) for idx in range(len(dataset))]
+    frame = pd.DataFrame(rows)
+    # crop_side_px is the same quantity as effective_gsd_m up to the tile's own
+    # resolution; keeping both would double-count it in a tree model.
+    return frame[["effective_gsd_m", "padded_fraction"]]
 
 
 #: Columns of the annotation table that describe acquisition or geometry rather

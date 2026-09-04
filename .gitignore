@@ -17,3 +17,4 @@ data/**
 # and the notebooks cannot run without them.
 !data/*.csv
 model/cv_cache/
+model/checkpoints/
