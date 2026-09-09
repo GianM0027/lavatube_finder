@@ -1,64 +1,46 @@
 """
 Baselines that deliberately cannot see morphology.
 
-A CNN score means nothing on its own. What it has to beat is not chance and not
-the majority class, but *whatever is obtainable from this data set without
-looking at shape* -- because on the previous version of this task that number
-was 97.9%, and every point of it came from the data pipeline rather than from
-the model.
-
-Three baselines, in increasing order of what they are allowed to know.
+A CNN score means nothing on its own. What it has to beat is not chance and
+not the majority class, but whatever is obtainable from this data set
+*without looking at shape*. Each baseline is listed below with what it is
+allowed to know; all are scored with the same group-aware stratified k-fold
+as the neural models, so the numbers are directly comparable.
 
 ``majority``
-    Predict the most common class in the training fold. The floor.
+    The most common class in the training fold. The floor.
 
 ``histogram``
-    Statistics of the crop's intensity histogram: moments, percentiles, dark and
-    bright fractions, entropy. **Every one of these is invariant to permuting
-    the pixels of the image.** Shuffle a crop and its morphology is destroyed
-    while these features are untouched, so anything this baseline achieves is
-    achievable with literally zero shape information. That makes it the honest
-    bar for the optical CNN.
+    Moments, percentiles, dark and bright fractions, entropy. Every one is
+    invariant to permuting the pixels, so whatever it scores is achievable
+    with zero shape information. This is the honest bar for the optical CNN.
 
 ``texture``
-    ``histogram`` plus gradient-magnitude statistics. No longer
-    permutation-invariant -- a gradient is a local spatial relation -- but still
+    ``histogram`` plus gradient-magnitude statistics. A gradient is a local
+    spatial relation, so this is not permutation-invariant, but it still
     carries no global shape. Reported separately so the two are not conflated.
 
 ``illumination``
     Solar incidence, emission and phase angle, season and local solar time of
-    the source HiRISE product. These are constant within a product, so this set
-    is only interpretable under **product-level** grouping; under landform-level
-    grouping it degenerates into a product-identity lookup. Running it at both
-    levels is the cheapest available demonstration that the grouping matters.
+    the source HiRISE product. Constant within a product, so it is only
+    interpretable under product-level grouping.
 
 ``geometry``
-    The crop *window* and none of its pixels: effective ground sampling distance
-    and padded fraction. Which of the two carries the class depends on the crop
-    policy, and neither is morphology. Under the relative policy this scores
-    80.9% on the binary task; under the fixed-footprint policy, 70.0%. See
-    :func:`geometry_features` -- this is the control the crop policy has to be
-    judged against.
+    The crop *window* and none of its pixels: effective ground sampling
+    distance and padded fraction. Neither is morphology. This is the control
+    the crop policy has to be judged against.
 
 ``availability``
-    Thermal *coverage bookkeeping* and no temperature: how many THEMIS frames a
-    site received, at which local solar times, how much of each window was
-    valid. THEMIS coverage depends on location and location correlates with
-    class, so missingness carries class information by itself. This is the
-    control the multimodal claim has to clear.
+    Thermal coverage bookkeeping and no temperature. Coverage depends on
+    where a site is and that correlates with what it is, so missingness
+    carries class information by itself. This is the control the multimodal
+    claim has to clear.
 
 ``metadata``
-    Acquisition and geometry columns only: resolution, tile dimensions,
-    annotated diameter, latitude, longitude. **This is not a legitimate
-    detector.** ``diameter_m`` comes from the annotation itself, so a real
-    system would not have it before detecting anything. It is a diagnostic: it
-    measures how much of the label is carried by things that are not the image.
-    Expect it to score well, because size genuinely separates these classes
-    (median annotated diameter 155 m for Type-1 against 779 m for Type-2), and
-    report it as a disclosure rather than as a result.
-
-All baselines are evaluated with the same group-aware, stratified k-fold used
-for the neural models, so the numbers are directly comparable.
+    Acquisition and geometry columns, including the annotated diameter.
+    **Not a legitimate detector** -- a real system would not know the diameter
+    before detecting anything. It measures how much of the label is carried by
+    things that are not the image, and is a disclosure rather than a result.
 """
 
 from __future__ import annotations
@@ -138,7 +120,7 @@ def texture_features(image: np.ndarray) -> Dict[str, float]:
     """
     ``histogram_features`` plus gradient-magnitude statistics.
 
-    Gradients are a local spatial relation, so this is no longer
+    Gradients are a local spatial relation, so this is not
     permutation-invariant. It still describes no global shape.
     """
     features = histogram_features(image)
@@ -162,42 +144,29 @@ def geometry_features(dataset) -> pd.DataFrame:
     """
     What the *crop window* gives away, before anything inside it is looked at.
 
-    The control for the crop policy, in the same spirit as
-    :func:`availability_features` is the control for the thermal claim: a
-    classifier is handed the geometry of the window and none of its pixels, and
-    whatever it scores above the majority class is the size of the shortcut.
-
-    Two columns, and which one bites depends on the policy:
+    The control for the crop policy: a classifier is handed the geometry of
+    the window and none of its pixels, and whatever it scores above the
+    majority class is the size of the shortcut. Which of the two columns bites
+    depends on the policy.
 
     ``effective_gsd_m``
-        Metres per pixel of the crop as the network receives it. Under
-        ``crop_policy="relative"`` the window is sized as a multiple of the
-        annotation and then resampled to a fixed pixel side, so this is a direct
-        function of the landform's size -- median 0.71 m/pixel for Type-1
-        against 3.45 for Type-2. Type-1 crops arrive upsampled and smooth,
-        Type-2 crops downsampled and sharp, and that difference alone separates
-        the classes at **80.9%** against a 66.1% majority under product-level
-        grouping. Gradient statistics of the crop recover it with out-of-group
-        :math:`R^2 = 0.59`, so it is not hypothetical: it is in the pixels the
-        CNN is reading. Under ``"fixed_gsd"`` it is constant and carries
-        nothing.
+        Metres per pixel as the network receives it. Under ``"relative"`` the
+        window is sized as a multiple of the annotation, so this is a direct
+        function of the landform's size and separates the classes at 80.9%
+        against a 66.1% majority. Under ``"fixed_gsd"`` it is constant.
 
     ``padded_fraction``
         Share of the window that fell outside the tile and was zero-filled.
-        Zero under ``"relative"``, which clamps to the tile. Under
-        ``"fixed_gsd"`` it is what the shortcut collapses to: DeepLandforms
-        tiles are themselves sized in proportion to their landform, so a fixed
-        footprint runs out of tile class-dependently -- 0.15 mean for Type-1
-        against 0.03 and 0.02. On its own it carries **70.0%**.
+        Zero under ``"relative"``, which clamps to the tile; under
+        ``"fixed_gsd"`` the tiles run out class-dependently -- 0.15 mean for
+        Type-1 against 0.03 and 0.02 -- and it carries 70.0% on its own.
 
-    So the crop policy does not remove the shortcut, it trades a large unnamed
-    one for a smaller named one: 80.9% becomes 70.0%. Report this baseline
-    beside the CNN under each policy, exactly as ``availability`` is reported
-    beside the multimodal claim.
+    So the fixed policy trades a large unnamed shortcut for a smaller named
+    one, and this baseline belongs beside the CNN under either policy.
 
     :param dataset: a :class:`~model.landform_dataset.LandformDataset`. The
-        geometry is taken from ``dataset.crop_geometry`` rather than recomputed,
-        so it cannot drift from what the crops actually did.
+        geometry comes from ``dataset.crop_geometry`` rather than being
+        recomputed, so it cannot drift from what the crops actually did.
     :return: one row per sample.
     """
     rows = [dataset.crop_geometry(idx) for idx in range(len(dataset))]
@@ -334,26 +303,22 @@ def availability_features(
     """
     Thermal *coverage bookkeeping* for each annotation -- and no temperature.
 
-    How many THEMIS frames a site received, at which local solar times, and how
-    much of each window was valid. Not one Kelvin value is included.
+    How many THEMIS frames a site received, at which local solar times, and
+    how much of each window was valid. Not one Kelvin value is included.
 
     This is the control experiment for the multimodal claim. THEMIS coverage
-    depends on where a site is, and where a site is correlates with what it is,
-    so the *pattern of missingness* carries class information on its own.
-    Measured on the superseded grid-based run, a classifier given nothing but
-    the frame count scored 60.5% on binary against a 54.0% majority, and 51.3%
-    on 3-class against 46.0% -- roughly six points from a single integer.
-
-    Use it as a floor: if a multimodal model beats optical-only by no more than
-    this baseline beats the majority class, the gain is coverage bookkeeping and
-    not thermal physics.
+    depends on where a site is, and where a site is correlates with what it
+    is, so the pattern of missingness carries class information on its own.
+    Use it as a floor: if a multimodal model beats optical-only by no more
+    than this beats the majority class, the gain is coverage bookkeeping
+    rather than thermal physics.
 
     :param annotation_sites: ``image_name`` / ``site_id`` rows from
         ``data.thermal.thermal_sites.landform_sites``.
     :param manifest_path: ``window_manifest.json`` written by the thermal
         pipeline.
     :return: one row per annotation, or ``None`` if the manifest does not
-        describe these sites (for instance a stale one from an earlier run).
+        describe these sites.
     """
     import json
     import os

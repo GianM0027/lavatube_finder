@@ -1,22 +1,15 @@
 """
-Geographic coordinates for the training images, for THEMIS thermal retrieval.
+Geographic coordinates for the training images, for THEMIS retrieval.
 
-The crops in data/ come from two sources whose georeferencing differs, and one
-of them is subtly malformed, so the CRS cannot simply be trusted as written:
+Planetary PDS/ISIS products often store an Equirectangular projection with
+the standard parallel in ``latitude_of_origin`` while
+``standard_parallel_1`` is 0. Read literally that offsets every latitude by
+exactly the standard parallel and mis-scales longitude.
 
-* DeepLandforms crops carry a correct Equirectangular CRS.
-* Plain-terrain crops inherit their CRS from the source HiRISE products. Most
-  are Equirectangular with the standard parallel mistakenly stored in
-  ``latitude_of_origin`` while ``standard_parallel_1`` is 0 -- a known quirk of
-  planetary PDS/ISIS products. Read literally, this offsets every latitude by
-  exactly the standard parallel (verified: 35 deg, 5 deg, 45 deg, 15 deg errors)
-  and mis-scales longitude. A few products are Polar Stereographic instead and
-  are correct as written.
-
-`center_latlon` detects the malformed pattern and rebuilds the projection with
-the standard parallel in the right slot, leaving every other CRS untouched.
-Validated against the LBL-derived lat/lon recorded in
-data/plain_terrain_dataset/plain_terrain_annotations.csv.
+:func:`center_latlon` detects the malformed pattern and rebuilds the
+projection with the standard parallel in the right slot, leaving every other
+CRS -- including the correct Equirectangular of the DeepLandforms tiles and
+the Polar Stereographic of some products -- untouched.
 """
 
 from __future__ import annotations

@@ -1,25 +1,13 @@
 #!/usr/bin/env python3
 """
-THEMIS Phase 2 - single PBT product -> matrix
+Fetch one THEMIS PBT product and decode it to a matrix.
 
-Input:
-    --id I88015002
-
-Pipeline:
-    observation ID
-      -> official ASU ODTGEO master index (cached once)
-      -> exact PBT path
-      -> download IMG + detached label
-      -> decode matrix
-      -> save .npy + metadata JSON
-
-No ODE calls are used here.
-
-Install:
-    pip install requests numpy rasterio
+Resolves an observation id through the ASU ODTGEO master index (cached once)
+to an exact product path, downloads the IMG and its detached label, decodes
+the matrix and writes a ``.npy`` beside a metadata JSON. No ODE calls.
 
 Run:
-    python themis_phase2_single_pbt.py --id I88015002
+    python -m data.thermal.themis_id_to_thermal_value --id I88015002
 """
 
 from __future__ import annotations
@@ -47,9 +35,9 @@ _HERE = Path(__file__).resolve().parent
 CACHE_DIR = _HERE / "themis_cache"
 INDEX_FILE = CACHE_DIR / "CMIDX_ODTIP.TAB"
 
-# Whole-product downloads land here. The pipeline no longer needs them --
-# themis_windows.py fetches just the bytes covering each window over HTTP range
-# requests -- but the path is kept for direct CLI use of this script.
+# Whole-product downloads land here, for direct CLI use of this script. The
+# window pipeline does not use them: themis_windows.py fetches only the bytes
+# covering each window, over HTTP range requests.
 OUT_DIR = _HERE / "themis_products"
 
 HEADERS = {

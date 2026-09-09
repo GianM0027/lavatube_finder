@@ -1,44 +1,25 @@
 """
 Crop planning for the DeepLandforms landform tiles.
 
-Why this exists
----------------
-DeepLandforms cuts one tile per annotated landform, centred on that landform and
-sized in proportion to it. Training on the tiles as they are hands a classifier
-two shortcuts that have nothing to do with morphology:
+DeepLandforms cuts one tile per annotated landform, centred on that landform
+and sized in proportion to it. Training on the tiles as they are hands a
+classifier two shortcuts that have nothing to do with morphology:
 
-* **Position.** The landform is always in the middle of the tile, so "is there a
-  blob at the centre" separates a landform from anything else.
-* **Tile size.** The tile side tracks the landform size (median tile/landform
-  ratio 3.9), so the raster dimensions leak the class: the median annotated
-  diameter is 155 m for Type-1, 512 m for Type-4 and 779 m for Type-2.
+* **Position** -- the landform is always in the middle of the tile.
+* **Tile size** -- the tile side tracks the landform size (median ratio 3.9),
+  and size is class-dependent: median annotated diameter is 155 m for Type-1,
+  512 m for Type-4 and 779 m for Type-2.
 
-Two crop policies
------------------
-``plan_crop`` (**relative**, ``context`` x the annotation) removes the size cue
-from the raster dimensions but reintroduces it as a *resampling* artefact once
-the crop is resized to a fixed pixel side -- see ``plan_crop_fixed`` for the
-measurement. ``plan_crop_fixed`` (**fixed footprint**) instead covers the same
-ground extent every time and pads where the tile runs out. Report both: the gap
-between them is how much of an optical score is morphology and how much is the
-pipeline.
-
-What the relative policy does
------------------------------
-One crop per annotation, from every tile, with:
-
-* **side proportional to the landform** (``context`` x its bounding box), so the
-  landform occupies a roughly constant fraction of the frame and the raster
-  dimensions no longer encode the class;
-* **a random offset**, constrained so the whole annotation stays inside the crop
-  and the crop stays inside the tile, so the landform is not centred;
-* **no rejection**. The side is clamped to the tile, and DeepLandforms tiles
-  always contain their own landform (smallest measured tile/landform ratio
-  1.38), so every one of the 1846 annotations yields a crop.
+Two crop policies remove them differently. :func:`plan_crop` (**relative**)
+sizes the window as ``context`` x the annotation and jitters it so the
+landform is neither centred nor a fixed share of the raster; that removes the
+size cue from the dimensions but reintroduces it as a resampling artefact.
+:func:`plan_crop_fixed` (**fixed footprint**) covers the same ground extent
+every time and pads where the tile runs out. Report both: the gap between
+them is how much of an optical score is morphology and how much is pipeline.
 
 The bounding box is used rather than the segmentation polygon because in this
-data set they agree: ``bbox`` is exactly the tight bound of the polygon
-(total absolute disagreement 377 px over all 1846 annotations, i.e. rounding).
+data set they agree to within rounding.
 """
 
 from __future__ import annotations
@@ -106,65 +87,35 @@ def plan_crop_fixed(
     """
     Plan one square crop of a **fixed extent on the ground**, in tile pixels.
 
-    Why this exists
-    ---------------
-    :func:`plan_crop` sizes the window as a multiple of the annotation and the
-    dataset then resamples it to a fixed pixel side. That removes the landform's
-    size from the raster dimensions, but it puts it straight back into the
-    *pixels*: the resampling factor becomes a function of the landform's size,
-    and landform size is strongly class-dependent. Measured over the 1846
-    annotations, ``context=1.75`` gives a median effective ground sampling
-    distance of 0.71 m/pixel for Type-1 against 3.45 m/pixel for Type-2, so
-    Type-1 crops arrive upsampled and smooth while Type-2 crops arrive
-    downsampled and sharp. That difference alone -- with no morphology at all --
-    separates Type-1 from the rest at 80.9% accuracy under product-level
-    grouping, against a 66.1% majority, and gradient statistics of the crop
-    recover it with out-of-group :math:`R^2 = 0.59`.
+    :func:`plan_crop` sizes the window as a multiple of the annotation, and
+    the dataset then resamples it to a fixed pixel side -- which removes the
+    landform's size from the raster dimensions but puts it straight back into
+    the pixels. At ``context=1.75`` the median effective ground sampling
+    distance is 0.71 m/pixel for Type-1 against 3.45 for Type-2, so Type-1
+    crops arrive upsampled and smooth while Type-2 crops arrive downsampled
+    and sharp. That difference alone separates Type-1 from the rest at 80.9%
+    against a 66.1% majority, and it is an artefact of the pipeline that no
+    detector sliding over a native-resolution product would have.
 
-    It is an artefact of the pipeline, not a property of Mars, and it would not
-    survive a detector sliding over a native-resolution HiRISE product.
+    Here every crop covers the same ``footprint_m`` of ground, so the
+    resampling factor depends only on the tile's own ``resolution_mpp``, which
+    is the replica axis and is balanced across classes. Apparent size varies
+    again, but apparent size at a fixed scale is a real cue a real detector
+    would also have.
 
-    What this does instead
-    ----------------------
-    Every crop covers the same ``footprint_m`` metres of ground. Paired with a
-    fixed output ground sampling distance in the dataset, the resampling factor
-    then depends only on the tile's own ``resolution_mpp`` -- which is the
-    DeepLandforms replica axis and is very nearly balanced across classes
-    (Type-1 is exactly 20% at each of 0.5/1/2/3/5 m/pixel, and
-    ``resolution_mpp`` alone predicts the class at exactly the majority rate).
+    It is not free. A fixed footprint does not always fit the tile, and the
+    tiles are themselves sized in proportion to their landform, so the padded
+    fraction is class-dependent -- 0.16 mean for Type-1 against 0.05 and 0.03 --
+    and padding alone predicts the class at 70.0%. Kept as a named control:
+    see ``model.baselines.geometry_features``.
 
-    The landform's *apparent* size now varies from crop to crop again. That is
-    deliberate and it is not the same thing: apparent size at a fixed scale is a
-    real physical cue that a real detector would also have, so it can be
-    disclosed and ablated rather than accidentally manufactured.
-
-    What it costs
-    -------------
-    A fixed footprint does not always fit the tile, and DeepLandforms tiles are
-    themselves sized in proportion to their landform, so the padded fraction is
-    class-dependent: at 960 m it averages 0.16 for Type-1 against 0.05 for
-    Type-4 and 0.03 for Type-2. Padding alone predicts the class at 70.0%,
-    against 80.9% for the effective GSD it replaces. It is not zero, so it is
-    kept as a named control -- see ``model.baselines.geometry_features``.
-
-    How the offset is drawn, and why not the way ``plan_crop`` draws it
-    ------------------------------------------------------------------
-    ``plan_crop`` picks uniformly from the offsets that keep the whole
-    annotation inside the window. Carried over to a fixed footprint that rule
-    becomes class-dependent, because a large landform nearly fills the window
-    and so has almost nowhere to move: measured at 960 m, median available
-    jitter would be 0.63 of the side for Type-1 against 0.18 for Type-2, with
-    26% of Type-2 annotations unable to move at all. That is the positional
-    shortcut handed straight back, class-dependently -- the same failure the
-    ``context`` factor was tuned to avoid.
-
-    So the fixed policy jitters the window *centre* by a fixed fraction of the
-    footprint instead, uniformly and without reference to the annotation's size.
-    Every sample gets exactly the same amount of positional augmentation, so the
-    jitter cannot encode anything. The price is that a landform larger than
-    ``(1 - 2 * jitter_fraction) * footprint_m`` can have an edge pushed out of
-    frame -- which is what a detector scanning at a fixed scale would also see,
-    and is therefore a property of the task rather than of the pipeline.
+    The offset is drawn differently too. Picking uniformly from the offsets
+    that keep the annotation inside the window, as :func:`plan_crop` does,
+    becomes class-dependent at a fixed footprint: a large landform nearly
+    fills the window and has almost nowhere to move, and 26% of Type-2
+    annotations could not move at all. So this jitters the window *centre* by
+    a fixed fraction of the footprint, identically for every sample, and the
+    jitter cannot encode anything.
 
     :param tile_width: Tile width in pixels.
     :param tile_height: Tile height in pixels.
@@ -235,21 +186,12 @@ def plan_crop(
         1.75 puts the landform at ~57% of the frame, keeping its rim and a band
         of surrounding terrain in view.
 
-        Do not raise this without re-checking the jitter it leaves. The crop is
-        clamped to the tile, and the tile/landform ratio is itself
-        class-correlated (median 3.9 overall, but Type-2 annotations are much
-        larger relative to their tile), so a bigger context factor runs out of
-        tile more often for some classes than others and hands the positional
-        cue straight back. Measured share of annotations left with under 2% of
-        the crop side to move in, by class (Type-1 / Type-4 / Type-2):
-
-        =========  ==========================  =======================
-        context    stuck (T1 / T4 / T2)        median jitter
-        =========  ==========================  =======================
-        1.75       1.0% / 2.4% / 7.4%          0.429 / 0.428 / 0.428
-        2.0        2.7% / 13.9% / 19.7%        0.500 / 0.500 / 0.384
-        2.5        17.4% / 24.4% / 36.0%       0.600 / 0.455 / 0.111
-        =========  ==========================  =======================
+        Do not raise this without re-checking the jitter it leaves. The crop
+        is clamped to the tile and the tile/landform ratio is itself
+        class-correlated, so a bigger context factor runs out of tile more
+        often for some classes than others and hands the positional cue back.
+        At 1.75 the share of annotations with nowhere to move is 1.0 / 2.4 /
+        7.4% by class; at 2.5 it is 17.4 / 24.4 / 36.0%.
 
         1.75 is the largest value at which the jitter is flat across classes.
     :param rng: Source of randomness for the offset. ``None`` centres the crop
@@ -357,15 +299,13 @@ def annotation_table(
     image_name, img_path, category_id, bbox
         Tile identity, class and annotation box.
     landform_key
-        The tile with its resolution token stripped, so the 0.5/1/2/3/5 m/pixel
-        replicas of one landform share a key.
+        The tile with its resolution token stripped, so the replicas of one
+        landform share a key.
     product
         HiRISE product id. Two landforms in one product share season, solar
-        incidence and calibration, so the split has to be able to hold them
-        together.
+        incidence and calibration, so the split has to hold them together.
     resolution_mpp, tile_width, tile_height
-        Acquisition properties, kept so they can be checked as confounds rather
-        than silently learned.
+        Acquisition properties, kept so they can be checked as confounds.
     lat, lon_east
         Centre of the annotation, for the thermal pipeline.
 

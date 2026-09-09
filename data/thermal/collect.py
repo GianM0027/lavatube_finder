@@ -230,46 +230,22 @@ def frame_times(
     """
     Mars local solar time and season for every stored frame, keyed by site.
 
-    Why the model needs this
-    ------------------------
-    ``spread_over_local_time`` uses local solar time to *choose* and *order*
-    frames, and then throws it away: what reaches the network is
-    ``(T, 2, k, k)`` -- temperature and a validity mask -- with no clock. But
-    Cushing et al. (2007) identify a cave-connected pit by a *diurnal
-    amplitude*, which is a temperature difference divided by a time difference.
-    A model with no time axis cannot compute one, and slot 0 is 03h at one site
-    and 07h at the next, so the temporal convolution is not even comparing like
-    with like.
+    ``spread_over_local_time`` uses local solar time to choose and order
+    frames and then throws it away, but the discriminant is a diurnal
+    amplitude -- a temperature difference over a time difference -- so the
+    model needs the clock back. Slot 0 is 03h at one site and 07h at the next,
+    so without it the temporal convolution compares frames that are not
+    comparable.
 
-    That it matters is measurable in the stored windows. Splitting the
-    centre-minus-annulus contrast by local time band, the separation between
-    Type-1 and the rest is not merely weaker at some hours -- the *mechanism
-    changes sign*:
+    It matters because the mechanism changes sign with the hour. The
+    centre-minus-annulus contrast for Type-1 against the rest runs +1.27 K at
+    02-06 h, Cushing's warm insulated skylight, but -0.44 K at 14-18 h where a
+    large Type-2 bowl is cold because it is in shadow -- the same morphology
+    the optical branch already reads. Averaging the two regimes into one
+    sequence cancels part of the signal.
 
-    ========================  ==========  ==========  ==========
-    band                      Type-1      Type-2      Type-4
-    ========================  ==========  ==========  ==========
-    02-06 h (pre-dawn)        +1.27 K     +0.75 K     -0.27 K
-    06-10 h (dawn)            +0.59 K     +0.56 K     -1.09 K
-    14-18 h (afternoon)       -0.44 K     -3.53 K     -1.38 K
-    18-22 h (dusk)            +0.16 K     -0.51 K     -0.62 K
-    ========================  ==========  ==========  ==========
-
-    Pre-dawn is Cushing's regime: a warm, insulated skylight against cold
-    ground. The afternoon column is the opposite mechanism -- a large bowl-shaped
-    Type-2 pit is 3.5 K *cold* at 14-18 h, which is shadow, i.e. the same
-    morphology the optical branch already reads, sampled at 100 m. Averaging the
-    two regimes into one sequence without telling the model which is which
-    cancels part of the signal.
-
-    Encoding
-    --------
-    Angles are returned as raw values; ``LandformDataset`` turns them into
-    ``sin``/``cos`` pairs so that 23:30 and 00:30 are adjacent rather than a
-    24-hour jump.
-
-    Frame order matches the ``(T, k, k)`` order of the stored ``.npy``: both
-    come from the same loop in :func:`extract_windows`.
+    Angles are returned raw; ``LandformDataset`` encodes them as sin/cos pairs
+    so 23:30 and 00:30 are adjacent. Frame order matches the stored ``.npy``.
 
     :param manifest_path: ``window_manifest.json``, which carries local solar
         time per frame.

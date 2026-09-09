@@ -349,17 +349,15 @@ def train_model(
 
 def pad_collate_fn(batch):
     """
-    Pads the HiRISE images' spatial dimensions (H, W) across a batch on CPU.
+    Pads the HiRISE images' spatial dimensions across a batch on CPU.
 
-    LandformDataset resamples every crop to a fixed ``out_px``, so in normal use
-    there is nothing to pad and this is a plain stack. It is kept because it
-    still handles the 1x1 placeholder returned under ``load_optical=False``, and
-    because it costs nothing.
+    Every crop is resampled to a fixed ``out_px``, so in normal use there is
+    nothing to pad and this is a plain stack; it still handles the 1x1
+    placeholder returned under ``load_optical=False``.
 
-    Thermal frames are NOT padded to the image size: they are THEMIS windows at
-    native ~100 m/pixel resolution with their own fixed, much smaller shape, so
-    they are stacked as-is. The same goes for the per-frame time vectors, which
-    are ``(T, THERMAL_TIME_DIM)`` and carry no spatial extent at all.
+    Thermal frames are not padded to the image size -- they are THEMIS windows
+    at native resolution with their own much smaller shape -- and neither are
+    the per-frame time vectors, which carry no spatial extent.
     """
     images, thermals, thermal_times, labels = zip(*batch)
 
@@ -393,9 +391,9 @@ def group_aware_split(groups, labels, val_split=0.2, seed=42):
     Within a class, groups are shuffled and taken until the target share of that
     class's samples is reached.
 
-    Prefer :func:`cross_validate` for anything reported: with 159 product-level
-    groups a single 20% hold-out leaves ~32 groups, and the fold-to-fold spread
-    is wider than most effects worth measuring.
+    Prefer :func:`cross_validate` for anything reported: a single 20% hold-out
+    leaves ~32 product groups, and the fold-to-fold spread is wider than most
+    effects worth measuring.
     """
     rng = np.random.default_rng(seed)
 
@@ -452,27 +450,13 @@ def loaders_from_indices(
             f"({len(train_dataset)} vs {len(val_dataset)} rows)"
         )
 
-    # Workers are worth having, but they are expensive in a way that is easy to
-    # miss. The bottleneck is decoding crops, not the GPU: a fixed-footprint
-    # window is up to 1920 px on a side before it is resampled to 384, and GDAL
-    # has to decompress all of it (these tiles carry no overviews, so asking
-    # rasterio for a decimated read buys nothing -- measured, 68 ms/crop either
-    # way). Measured on one training epoch, fixed_gsd, optical:
-    #
-    #     num_workers=0  62 ms/sample
-    #     num_workers=4  19 ms/sample
-    #     num_workers=8  14 ms/sample
-    #
-    # The cost: Windows spawns a fresh interpreter per worker, each of which
-    # imports torch and lands at **about 0.7 GB resident**. Giving both loaders
-    # `num_workers` therefore costs 2 x 0.7 GB x num_workers, and at 8 that is
-    # 11 GB before the training process itself is counted. It has already filled
-    # a 31 GB machine and taken the IDE down with it.
-    #
-    # So: workers on the training loader only. The validation loader gets none,
-    # because its crops are deterministic under augment=False and
-    # ``LandformDataset(cache_crops=True)`` decodes them once and keeps them --
-    # 270 MB for the whole table, against 0.7 GB for a single worker.
+    # Workers pay off because the bottleneck is decoding crops, not the GPU:
+    # 62 ms/sample at num_workers=0 against 19 at 4 and 14 at 8. They are also
+    # expensive -- Windows spawns a fresh interpreter per worker, each ~0.7 GB
+    # resident -- so only the training loader gets them. The validation loader
+    # needs none: its crops are deterministic under augment=False and
+    # LandformDataset(cache_crops=True) decodes them once, 270 MB for the
+    # whole table.
     common = dict(
         batch_size=batch_size,
         collate_fn=pad_collate_fn,
@@ -499,15 +483,13 @@ def shutdown_loader(loader) -> None:
     """
     Stop a loader's worker processes now, rather than whenever it is collected.
 
-    Persistent workers live until the DataLoader is finalised, and CPython does
-    not promise when that happens -- a lingering reference from a traceback or
-    an exception context is enough to keep a fold's workers alive while the next
-    fold spawns its own. Left alone across a five-fold run that accumulates:
-    measured, 47 live worker processes holding 14.2 GB, with the run itself
-    stalled.
+    Persistent workers live until the DataLoader is finalised, and CPython
+    does not promise when that happens -- a lingering reference is enough to
+    keep a fold's workers alive while the next fold spawns its own. Left
+    alone across a five-fold run that reached 47 live workers holding 14.2 GB.
 
-    Called at the end of every fold in :func:`cross_validate`. Safe on a loader
-    with no workers, and safe to call twice.
+    Called at the end of every fold. Safe on a loader with no workers, and
+    safe to call twice.
     """
     iterator = getattr(loader, "_iterator", None)
     if iterator is not None:
@@ -637,55 +619,35 @@ def cross_validate(
     """
     Run group-aware stratified k-fold and report per-fold and aggregate metrics.
 
-    Which epoch is reported
-    -----------------------
-    The ``val_*`` columns come from each fold's **final** epoch, at a fixed
-    budget of ``num_epochs``. The ``best_*`` columns come from the epoch that
-    maximised ``select_by`` *on the validation fold itself*, which is a model
-    selection performed on the data being scored and is optimistic by
-    construction. On the binary task the gap was 2.4 accuracy points for
-    optical (95.9 best-epoch against 93.5 final) and 4.5 for thermal (73.5
-    against 69.0), always in the same direction, with ``best_epoch`` landing on
-    epoch 1 of 8 for one fold.
-
-    That matters here beyond the usual, because the number these models are
-    compared against -- the ``histogram`` baseline -- has no epochs and so gets
-    no such selection. Reporting best-epoch CNNs against a fixed baseline
-    charges the whole bias to the CNN's side of the comparison.
-
-    **Report ``val_*``. Quote ``best_*`` only as a diagnostic**, next to
-    ``best_epoch``: a fold whose best epoch is far from the last one is a fold
-    that is still moving, which is an argument for a different budget rather
-    than a better score.
+    **Which epoch is reported.** The ``val_*`` columns come from each fold's
+    final epoch, at a fixed budget of ``num_epochs``. The ``best_*`` columns
+    come from the epoch that maximised ``select_by`` on the validation fold
+    itself, which is model selection on the data being scored and is
+    optimistic by construction. The baseline the models are compared against
+    has no epochs and gets no such selection, so report ``val_*`` and quote
+    ``best_*`` only as a diagnostic beside ``best_epoch``.
 
     :param dataset_factory: callable taking ``augment: bool`` and returning a
         dataset over the full annotation table. Called twice -- once augmented
-        for training, once not for validation -- so the two sides differ only in
-        augmentation, never in content.
-    :param model_factory: zero-argument callable returning a fresh model. A new
-        model per fold is essential -- reusing one would carry weights (and the
-        previous fold's validation data) across folds.
+        for training, once not for validation -- so the two sides differ only
+        in augmentation, never in content.
+    :param model_factory: zero-argument callable returning a fresh model. A
+        new model per fold is essential: reusing one would carry weights, and
+        the previous fold's validation data, across folds.
     :param optimizer_factory: callable taking the model, returning an optimizer.
-    :param select_by: history key whose best epoch is *also* recorded, as the
-        ``best_*`` columns. It is not the headline number -- see below.
+    :param select_by: history key whose best epoch is also recorded, as the
+        ``best_*`` columns.
     :param group_level: ``"product"`` (honest) or ``"landform"``. See
         ``LandformDataset.group_keys``.
-    :param seed: drives the fold partition **and** the weight initialisation, so
-        repeating a run with a different seed re-partitions and re-initialises.
-        That is what makes repeated cross-validation an estimate of variability
-        rather than five correlated redraws of the same split.
-    :param collect_oof: also return out-of-fold predictions. Every sample is
-        predicted exactly once, by the fold that did not train on it, giving one
-        honest confusion matrix over the whole data set rather than five partial
-        ones. Taken from each fold's **final** epoch, not its best, so it does
-        not inherit the optimism noted above.
-    :param checkpoint_path: where to write **one** checkpoint per run: the
-        weights of whichever fold reached the highest validation
-        ``checkpoint_metric``. ``None`` writes nothing.
-
-        One file per run, not one per fold, because the folds are not
-        independently useful and 5 x 3 modalities x 3 seeds x 2 tasks x 2 crop
-        policies of ResNet18 weights is 180 files. The optimiser state is
+    :param seed: drives the fold partition **and** the weight initialisation,
+        so repeating a run with a different seed re-partitions and
+        re-initialises.
+    :param collect_oof: also return out-of-fold predictions -- every sample
+        predicted exactly once, by the fold that did not train on it. Taken
+        from each fold's final epoch.
+    :param checkpoint_path: where to write one checkpoint per run: the weights
+        of whichever fold reached the highest validation
+        ``checkpoint_metric``. ``None`` writes nothing. The optimiser state is
         deliberately not stored: this is a model to publish or fine-tune from,
         not a run to resume.
     :param checkpoint_metric: what that checkpoint tracks. Macro F1 by default
@@ -850,9 +812,9 @@ def create_dataloaders(
     :param dataset_factory: callable taking ``augment: bool``, as in
         :func:`cross_validate`.
     :param group_aware: when cleared, splits rows at random. That leaks
-        resolution replicas of the same landform across the split (measured
-        previously: 73.8% of validation images had a copy in training) and is
-        kept only to reproduce that number, never to report a result.
+        resolution replicas of the same landform across the split -- 73.8% of
+        validation images then have a copy in training -- and exists only to
+        demonstrate the leak, never to report a result.
     """
     train_dataset = dataset_factory(True)
     val_dataset = dataset_factory(False)
@@ -886,29 +848,20 @@ def repeated_cross_validate(
     """
     Run :func:`cross_validate` once per seed and stack the results.
 
-    Why more than one seed
-    ----------------------
     With 127 product-level groups a 5-fold split leaves about 25 groups per
-    fold, and the fold-to-fold spread is comparable to every effect the ablation
-    is trying to measure. A single 5-fold run therefore estimates the *mean*
-    reasonably and the *uncertainty on that mean* badly, because the five folds
-    share one partition: they are not five independent samples of "how well does
-    this do on unseen products", they are five slices of one particular way of
-    cutting the data.
+    fold, and the fold-to-fold spread is comparable to every effect the
+    ablation measures. One 5-fold run estimates the mean reasonably and the
+    uncertainty on it badly, because its five folds are slices of a single
+    partition. Changing the seed re-partitions the groups and re-initialises
+    the weights, so the spread across seeds captures both sources. Report the
+    mean over all seeds x folds, and the standard deviation of the per-seed
+    means as the uncertainty on it.
 
-    Changing the seed re-partitions the groups and re-initialises the weights,
-    so the spread across seeds captures both sources of variability. Report the
-    mean over all seeds x folds, and the standard deviation **of the per-seed
-    means** as the uncertainty on it.
-
-    Cost scales linearly. Three seeds is three times the compute; it is the
-    smallest number that gives any read on between-partition variability at all,
-    which is why it is the default rather than a larger one.
-
-    :param seeds: one cross-validation run per entry.
+    :param seeds: one cross-validation run per entry. Three is the smallest
+        number that reads between-partition variability at all; cost scales
+        linearly.
     :param checkpoint_path: if given, treated as a template and formatted with
-        ``seed=`` so the runs do not overwrite each other. Pass something like
-        ``"model/checkpoints/binary_both_seed{seed}.pt"``.
+        ``seed=`` so the runs do not overwrite each other.
     :param kwargs: everything else is forwarded to :func:`cross_validate`.
     :return: ``(per_run DataFrame indexed by (seed, fold), {seed: history list},
         {seed: (targets, probabilities)})``. The third is empty unless
@@ -966,20 +919,17 @@ def repeated_cross_validate(
 # Run cache
 # ---------------------------------------------------------------------------
 #
-# A grid of 36 runs is far longer than one sitting, so each is written to disk
-# as it finishes and skipped on the next pass. Two things make that dangerous
-# if done naively, and both have bitten this project:
+# A grid of 36 runs is longer than one sitting, so each is written to disk as
+# it finishes and skipped on the next pass. Two hazards, both handled here:
 #
-# 1. The result is two files. ``folds.json`` is written first, so an
-#    interruption between the two writes leaves a run that *looks* finished and
-#    then fails on ``np.load``. A third file, written last, is the completion
-#    marker: if it is there, all three are.
+# 1. The result is two files, and an interruption between the writes leaves a
+#    run that looks finished and then fails on load. A third file, written
+#    last, is the completion marker.
 #
-# 2. The cache key is task/policy/modality/seed and nothing else. Change the
-#    epoch budget, the crop footprint, the thermal window, whether the model is
-#    told the time -- and the old runs are silently reused beside the new ones,
-#    producing a table that averages incomparable things. So the settings are
-#    stored next to the result and compared on load.
+# 2. The cache key is task/policy/modality/seed and nothing else, so a change
+#    to the epoch budget or the crop footprint would silently mix incomparable
+#    runs into one table. The settings are stored beside the result and
+#    compared on load.
 
 
 def save_run(stem, per_fold, oof_targets, oof_probs, config=None):

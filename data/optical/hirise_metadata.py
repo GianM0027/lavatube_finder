@@ -1,23 +1,17 @@
 """
 Illumination and viewing geometry for the source HiRISE products.
 
-Why this exists
----------------
-What separates the DeepLandforms classes optically is shadow depth and whether a
-floor is visible: Type-1 has an "almost nonvisible bottom", Type-2 a "visible
-convex bottom", Type-4 a "visible flat bottom" (Nodjoumi et al. 2023, Fig. 3).
-All three are functions of how the sun was standing when the image was taken,
-and the same paper warns that Type-1b, Type-2a and Type-4 become hard to tell
-apart "especially when the solar incidence angle is low".
+What separates the DeepLandforms classes optically is shadow depth and
+whether a floor is visible, and all of that is a function of how the sun was
+standing; Nodjoumi et al. (2023) warn that Type-1b, Type-2a and Type-4 become
+hard to tell apart when the solar incidence angle is low. So incidence is a
+candidate shortcut rather than a nuisance variable: if it predicts the class
+on its own, a model trained on the pixels may be reading illumination rather
+than morphology. The tiles are derived products and carry none of the
+original observation metadata, so it has to come from the archive.
 
-So solar incidence is not a nuisance variable here, it is a candidate shortcut:
-if it predicts the class on its own, a model trained on the pixels may be
-reading illumination rather than morphology. It cannot be checked without
-pulling it from the archive, because DeepLandforms tiles are derived products
-and carry none of the original observation metadata.
-
-Source: the PDS Orbital Data Explorer REST service at Washington University,
-queried once per HiRISE product id and cached to CSV.
+Source: the PDS Orbital Data Explorer REST service, queried once per product
+id and cached to CSV.
 """
 
 from __future__ import annotations

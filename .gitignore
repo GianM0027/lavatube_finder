@@ -1,13 +1,18 @@
-papers
+# Environment and IDE
 .venv
 .idea
-__pycache__
 .env
-lavatube_finder.ipynb
-to-do
-trade_off.py
-model/best_model*.pt
-matched_crops_preview.png
+__pycache__
+.ipynb_checkpoints
+
+# Local working material, not part of the deliverable
+papers
+Claude outputs/
+
+# Generated artefacts: every one is reproduced by running the notebooks
+model/cv_cache/
+model/checkpoints/
+
 # Datasets are ignored, but the generation code that lives beside them is not.
 data/**
 !data/**/
@@ -16,5 +21,3 @@ data/**
 # Small reference catalogues are kept: they are inputs, not generated,
 # and the notebooks cannot run without them.
 !data/*.csv
-model/cv_cache/
-model/checkpoints/

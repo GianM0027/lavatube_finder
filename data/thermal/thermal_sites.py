@@ -1,27 +1,16 @@
 """
 Thermal query sites, keyed to landforms rather than to a coordinate grid.
 
-Why this replaces the grid
--------------------------
-The first version snapped every crop to a 0.05 degree grid and queried one
-window per occupied cell. Two things were wrong with that.
+A site is a **landform**: the same feature at every resolution replica and
+across repeat observations, identified by the same grouping the training
+split uses, so a site and a split group are the same object by construction.
+Its position is the mean of its members' annotation centres -- the centres of
+the pits themselves, not of the tiles or of the crops.
 
-* **The window missed its target.** 0.05 degrees is about 2.96 km at the
-  equator, and the extraction window was 3.2 km, so the grid step was very
-  nearly the whole window rather than half of it as intended. Measured against
-  the crops it was built from, the true landform centre sat a median of 1138 m
-  -- 11.4 THEMIS pixels -- from the window centre, and for 10.7% of crops the
-  landform fell outside its own window altogether. A THEMIS pixel is ~100 m and
-  the median annotated landform is 396 m across, so that is not a rounding
-  error, it is pointing at the wrong place.
-* **Cells are not landforms.** A cell could hold two unrelated pits, or split
-  one pit across a boundary, so a "site" had no physical meaning.
-
-Here a site is a **landform**: the same feature at every resolution replica and
-across repeat observations, identified by the same grouping the training split
-uses, so a site and a split group are the same object by construction. Its
-position is the mean of its members' annotation centres, which are the centres
-of the pits themselves, not of the tiles or of the crops.
+Keying on a coordinate grid instead would point the window at the wrong
+place: a cell can hold two unrelated pits or split one across a boundary, and
+a grid step comparable to the window size leaves the landform far from the
+centre of the window meant to measure it.
 """
 
 from __future__ import annotations
@@ -104,9 +93,9 @@ def landform_sites(
         })
 
     sites = pd.DataFrame(rows).sort_values(["lat", "lon_east"]).reset_index(drop=True)
-    # Prefixed "lf" rather than "site" on purpose: the superseded grid-based
-    # pipeline also numbered its cells site_0000 upward, and a stale manifest
-    # joined against these ids would match silently and be entirely wrong.
+    # Prefixed "lf" rather than "site" on purpose: a manifest built under a
+    # different site scheme would otherwise join silently against these ids
+    # and be entirely wrong.
     sites["site_id"] = [f"lf_{i:04d}" for i in range(len(sites))]
 
     lookup = sites.set_index("_group")["site_id"]

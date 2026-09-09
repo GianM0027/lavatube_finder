@@ -245,27 +245,20 @@ class LandformDataset(Dataset):
         """
         Identity of the site behind each sample, for group-aware splitting.
 
-        Three separate things put correlated samples in this dataset, and a
-        split that ignores any of them reports an inflated score:
+        Three relations put correlated samples in this dataset, and a split
+        that ignores any of them reports an inflated score:
 
-        1. **Resolution replicas.** DeepLandforms holds the same landform at
-           0.5, 1, 2, 3 and 5 m/pixel. A random row split puts rescaled copies
-           of one pit on both sides.
-        2. **Repeat observations.** The same pit is often imaged on several
-           orbits under different product ids, so the filenames give no hint
-           they are the same feature. Caught by proximity on the ground.
-        3. **Shared acquisition.** Two *different* landforms in one HiRISE
-           product share season, solar incidence angle, calibration and local
-           terrain. 159 products carry 1846 annotations, and one product alone
-           carries 78.
+        1. **Resolution replicas** -- the same landform at 0.5 to 5 m/pixel.
+        2. **Repeat observations** -- the same pit imaged on several orbits
+           under different product ids. Caught by proximity on the ground.
+        3. **Shared acquisition** -- two different landforms in one HiRISE
+           product share season, incidence angle, calibration and terrain.
 
-        ``level="landform"`` applies relations 1 and 2 and yields **318**
-        groups. ``level="product"`` adds relation 3 and yields **127** -- fewer
-        than the 159 distinct product ids, because the relations are combined by
-        union-find and a landform observed on two orbits pulls both products
-        into one component. The second is the honest number to report; the first
-        is worth reporting beside it, since the gap between them measures how
-        much acquisition context the model is leaning on.
+        ``level="landform"`` applies relations 1 and 2 and yields 318 groups.
+        ``level="product"`` adds relation 3 and yields 127 -- fewer than the
+        159 product ids, because union-find merges products that share a site.
+        The second is the honest number to report; the gap between them
+        measures how much acquisition context the model leans on.
 
         :param level: ``"landform"`` or ``"product"``.
         :param merge_radius_m: Ground distance under which two samples are
@@ -343,7 +336,7 @@ class LandformDataset(Dataset):
         store, valid_values = {}, []
         for path in glob.glob(os.path.join(self.thermal_dir, "*.npy")):
             stack = np.load(path).astype(np.float32)
-            if stack.ndim == 4:  # (T, 1, k, k) from an older writer
+            if stack.ndim == 4:      # (T, 1, k, k)
                 stack = stack[:, 0]
             store[os.path.splitext(os.path.basename(path))[0]] = stack
             valid = stack[stack != NODATA_KELVIN]
@@ -361,45 +354,30 @@ class LandformDataset(Dataset):
         """
         Thermal sequence for one sample, shaped ``(T, 2, k, k)``.
 
-        The thermal store is keyed purely by ``site_id`` and holds **no labels**.
-        The class always comes from the optical annotation table, so changing how
-        the HiRISE side is cut, filtered or relabelled cannot silently change
-        what the thermal branch is trained against.
+        The thermal store is keyed by ``site_id`` and holds no labels; the
+        class always comes from the optical annotation table.
 
-        **Two channels, not one.** Channel 0 is brightness temperature; channel
-        1 is a validity mask, 1 where a real measurement exists and 0 where
-        there is none. Missing values are filled so they normalise to 0.
+        **Two channels.** Channel 0 is brightness temperature, channel 1 a
+        validity mask -- 1 where a real measurement exists, 0 where there is
+        none. A sentinel value in a single channel would not do: 12.2% of
+        pixels are missing, any out-of-range fill drags the batch statistics
+        that ``BatchNorm2d`` then normalises by, and 13% of frames have holes
+        *inside* the window that a 3x3 convolution would blend across. The
+        mask rides through the same convolutions and tells every layer how
+        much of what it sees was real.
 
-        **Normalisation decides what channel 0 means.** Under ``"global"`` it is
-        standardised against the whole data set, so its dominant variance is
-        *where and when* the frame was taken -- latitude, season, time of day.
-        Measured: a model given only that scored AUC 0.671, statistically
-        indistinguishable from one given only latitude and longitude (0.660). It
-        was reading a map, not a cave.
+        **Normalisation decides what channel 0 means.** Under ``"global"`` it
+        is standardised against the whole data set, so its dominant variance
+        is where and when the frame was taken -- a model given only that
+        scored AUC 0.671, indistinguishable from one given only latitude and
+        longitude. Under ``"per_window"`` (the default) each frame has its own
+        median subtracted and is divided by a fixed 3 K, so what survives is
+        the local anomaly.
 
-        Under ``"per_window"`` (the default) each frame has its own median
-        subtracted and is divided by a fixed 3 K. Everything acting on the whole
-        neighbourhood equally cancels, and what survives is the local anomaly --
-        which over 312 independent landforms separates skylights from other pits
-        by 0.57 sigma with the sign Cushing et al. (2007) predict.
-
-        Why not a sentinel like -1 in a single channel:
-
-        * *It corrupts the statistics.* 12.2% of pixels are missing. Any
-          out-of-range fill drags the batch mean 23 K and doubles the standard
-          deviation, and ``ThermalEncoder`` runs ``BatchNorm2d``, so two sites
-          with identical physics but different coverage would normalise
-          differently. A mean fill is neutral by construction.
-        * *Missingness is spatial, not just per-frame.* 13% of frames are
-          partially valid -- holes inside the window. A 3x3 convolution over a
-          sentinel hole beside real terrain emits a blend the network then has to
-          learn to undo. The mask rides through the same convolutions and gives
-          every layer a spatially aligned "how much of this was real".
-
-        The mask does **not** remove the availability leak -- coverage still
-        correlates with class, and the model can read the mask. It makes the leak
-        a named input that can be ablated and measured, which is what
-        ``model.baselines.availability_features`` exists to quantify.
+        The mask does not remove the availability leak -- coverage still
+        correlates with class and the model can read the mask. It makes the
+        leak a named input that ``model.baselines.availability_features``
+        can measure.
 
         Frames are ordered by Mars local solar time and packed from the front;
         absent slots are all-fill with an all-zero mask.
@@ -408,9 +386,8 @@ class LandformDataset(Dataset):
         length = self.sequence_length
 
         if self.thermal_dir is None:
-            # Placeholder: no real store attached. Kept so a modality ablation
-            # can be run before the archive work lands, where "thermal" must
-            # score at the majority class.
+            # No real store attached: the noise control, in which the thermal
+            # branch must score at the majority class.
             return torch.randn(length, 2, k, k, dtype=torch.float32)
 
         if self._thermal_store is None:
@@ -461,41 +438,26 @@ class LandformDataset(Dataset):
         """
         When each thermal frame was taken, shaped ``(T, THERMAL_TIME_DIM)``.
 
-        Five numbers per frame: ``sin`` and ``cos`` of Mars local solar time on
-        the 24 h circle, ``sin`` and ``cos`` of solar longitude on the 360 deg
-        circle, and a flag that is 1 where a real time was known and 0 for an
-        absent frame.
+        Five numbers per frame: ``sin``/``cos`` of Mars local solar time on
+        the 24 h circle, the same for solar longitude on the 360 deg circle,
+        and a flag that is 1 where a real time was known. Angles are encoded
+        as sin/cos pairs so 23:30 and 00:30 sit next to each other.
 
-        **Why this is a separate return value and not two more image channels.**
-        Local solar time is a property of the frame, not of any pixel in it.
-        Broadcasting it across a 32x32 window would push four constant planes
-        through three convolutions and a batch norm, and then the centre-minus-
-        annulus difference that ``ThermalEncoder`` computes would cancel most of
-        what they carry. Concatenating them to the per-frame embedding, just
-        before the temporal convolution, puts the clock exactly where the
-        temporal model needs it and nowhere else.
+        Returned separately rather than as extra image channels: local solar
+        time is a property of the frame, not of any pixel in it, and
+        broadcasting it across the window would push constant planes through
+        the convolutions only for the centre-minus-annulus difference to
+        cancel most of what they carry. Concatenated to the per-frame
+        embedding, the clock sits where the temporal model needs it.
 
-        **Why the model needs a clock at all.** Cushing et al. (2007) identify a
-        cave-connected pit by its *diurnal amplitude*: a temperature difference
-        divided by a time difference. Without the second term there is no
-        amplitude to compute. Worse, frames are packed from the front in local
-        time order, so slot 0 is 03h at one site and 07h at the next -- the
-        temporal convolution was comparing frames that are not comparable.
+        The model needs one because the discriminant is a diurnal amplitude:
+        a temperature difference over a time difference. The regimes it spans
+        have opposite signs -- the Type-1 contrast runs +1.27 K at 02-06 h but
+        -0.44 K at 14-18 h, where a large Type-2 pit is cold because it is in
+        shadow -- so a model with no clock has to average them into one.
 
-        And the regimes it is averaging over have *opposite signs*. Measured on
-        the retrieved windows, the centre-minus-annulus contrast for Type-1
-        against the other classes runs +1.27 K / +0.75 K / -0.27 K at 02-06 h
-        (Cushing's warm insulated skylight) but -0.44 K / -3.53 K / -1.38 K at
-        14-18 h, where a large Type-2 bowl is cold because it is *in shadow*.
-        Those are two different physical mechanisms, and a model with no clock
-        has to average them into one.
-
-        Angles are encoded as sin/cos pairs rather than raw hours so that 23:30
-        and 00:30 sit next to each other instead of 23 hours apart.
-
-        With no ``thermal_times`` attached the whole tensor is zeros, which is
-        also the ablation: pass ``thermal_times=None`` to reproduce the
-        time-blind model.
+        With no ``thermal_times`` attached the tensor is zeros, which is the
+        time-blind ablation.
         """
         length = self.sequence_length
         features = np.zeros((length, THERMAL_TIME_DIM), dtype=np.float32)
@@ -561,9 +523,9 @@ class LandformDataset(Dataset):
         Geometry of one sample's crop: padded fraction and effective GSD.
 
         Both are potential shortcuts and neither is morphology, so they are
-        reported rather than assumed. Under ``"relative"`` the effective GSD is
-        the leak (80.9% on binary, product-grouped); under ``"fixed_gsd"`` it is
-        constant by construction and the padded fraction takes over, at 70.0%.
+        reported rather than assumed. Under ``"relative"`` the effective GSD
+        is the leak; under ``"fixed_gsd"`` it is constant and the padded
+        fraction takes over. See ``model.baselines.geometry_features``.
         """
         plan = self.plan_for(idx, rng=None)
         resolution = self.resolutions[idx]
@@ -590,8 +552,7 @@ class LandformDataset(Dataset):
         label = self.img_labels[idx]
 
         if not self.load_optical:
-            # 1x1 placeholder: collates like a real image, costs nothing, and
-            # the model discards it under modality="thermal".
+            # Collates like a real image; discarded under modality="thermal".
             image = torch.zeros(1, 1, 1, dtype=torch.float32)
         elif self._crop_cache is not None and idx in self._crop_cache:
             image = torch.from_numpy(
@@ -612,8 +573,7 @@ class LandformDataset(Dataset):
                 patch = self.random_dihedral(patch, rng)
 
             if self._crop_cache is not None:
-                # uint8 rather than the float tensor: a quarter of the memory,
-                # and the division below is cheap.
+                # uint8 rather than float: a quarter of the memory.
                 self._crop_cache[idx] = np.ascontiguousarray(patch, dtype=np.uint8)
 
             image = torch.from_numpy(
@@ -621,9 +581,8 @@ class LandformDataset(Dataset):
             ).unsqueeze(0)
 
         if self.generate_synthetic_thermal:
-            # Four elements, not three: the thermal *sequence* and the times it
-            # was taken at travel together, because neither means much without
-            # the other. See :meth:`thermal_time_for`.
+            # The sequence and its acquisition times travel together: neither
+            # means much without the other.
             return (
                 image,
                 self.thermal_for(idx),
@@ -644,11 +603,11 @@ class LandformDataset(Dataset):
         """
         Random flip and quarter turn (the 8 symmetries of the square).
 
-        Note the caveat: this changes the apparent illumination direction, which
-        on a real surface is fixed by the solar azimuth. What separates these
-        classes -- shadow fraction, rim sharpness, whether a floor is visible --
-        is orientation-invariant, so the transform is safe for *this* task, but
-        it would not be for anything that reads slope direction.
+        This changes the apparent illumination direction, which on a real
+        surface is fixed by the solar azimuth. What separates these classes --
+        shadow fraction, rim sharpness, whether a floor is visible -- is
+        orientation-invariant, so it is safe here but would not be for a task
+        that reads slope direction.
         """
         if rng.integers(2):
             image = np.fliplr(image)
@@ -666,13 +625,12 @@ class LandformDataset(Dataset):
         """
         Per-image percentile stretch onto 0-255.
 
-        This removes the brightness offset between HiRISE products, which is
-        driven mostly by solar incidence angle. That cuts both ways and is why
-        it is a flag rather than a fixed step: incidence angle is a genuine
-        acquisition confound here -- Nodjoumi et al. (2023) note that Type-1b,
-        Type-2a and Type-4 are hardest to tell apart precisely when incidence is
-        low -- but it is also physically tied to the shadow that makes a deep
-        pit readable. Train both ways and report the difference.
+        Removes the brightness offset between HiRISE products, driven largely
+        by solar incidence angle and regional albedo. A flag rather than a
+        fixed step because it cuts both ways: incidence is a genuine
+        acquisition confound, but brightness is also tied to the shadow that
+        makes a deep pit readable. Section 6.1 of ``data_overview`` measures
+        the trade.
         """
         arr = image.astype(np.float32)
         finite = arr[np.isfinite(arr)]
