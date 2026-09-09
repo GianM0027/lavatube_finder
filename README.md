@@ -51,8 +51,6 @@ acquisition straddles a fold.
 |---|---|
 | `data_overview.ipynb` | **Start here.** Sources, crop policy, splitting, what the data set contains and what the thermal branch can actually see. Builds `annotations.json`. |
 | `training.ipynb` | Baselines, the cross-validated modality ablation, the noise control, and the tables the paper quotes. |
-| `paper_figures.ipynb` | Thermal-coverage and HiRISE-product statistics quoted in the paper. |
-| `run_ablation.py` | The same ablation grid from a terminal; shares the notebook's cache. |
 | `data/optical/` | Crop planning (`landform_crops.py`) and HiRISE product geometry from PDS ODE. |
 | `data/thermal/` | THEMIS retrieval: site definition, footprint queries, window extraction. `thermal_data_collection.ipynb` drives it. |
 | `model/` | Dataset (`landform_dataset.py`), architecture (`model.py`), baselines, training and cross-validation utilities. |
@@ -70,7 +68,5 @@ Two inputs are not in the repository: the DeepLandforms tiles
 included.
 
 Then, in order: `data_overview.ipynb` to build the annotation table,
-`thermal_data_collection.ipynb` to fetch the windows, `run_ablation.py` (or the
-ablation cell in `training.ipynb`) to train, and `training.ipynb` /
-`paper_figures.ipynb` to report. Every run is cached as it finishes, so
-interrupting and re-running is free.
+`thermal_data_collection.ipynb` to fetch the windows, `training.ipynb` to report. 
+Every run is cached as it finishes, so interrupting and re-running is free.
