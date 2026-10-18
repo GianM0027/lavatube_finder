@@ -1,4 +1,4 @@
-# End-to-End Multimodal Detection of Martian Lava Tubes
+# End-to-End Multimodal Detection of Lunar and Martian Lava Tubes
 
 Optical and thermal orbital data, fused end to end, for classifying candidate
 cave entrances on Mars.
